@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>marselo.site</title>
+    <style>
+        /* Center all content on the page */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 50px;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        /* Comic Sans font and basic styling for the heading */
+        h1 {
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            font-size: 3rem;
+            margin-bottom: 30px;
+            /* Apply the rainbow animation */
+            animation: rainbowColors 4s linear infinite;
+        }
+
+        /* Keyframes for smooth rainbow color cycling */
+        @keyframes rainbowColors {
+            0%   { color: #ff0000; } /* Red */
+            15%  { color: #ff7f00; } /* Orange */
+            30%  { color: #ffff00; } /* Yellow */
+            45%  { color: #00ff00; } /* Green */
+            60%  { color: #0000ff; } /* Blue */
+            75%  { color: #4b0082; } /* Indigo */
+            90%  { color: #9400d3; } /* Violet */
+            100% { color: #ff0000; } /* Back to Red */
+        }
+
+        /* Stretches the image to a 16:9 aspect ratio */
+        .stretched-image {
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            object-fit: fill; /* Forces the image to stretch and ignore its original proportions */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-radius: 8px; /* Slight rounding for aesthetics */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Rainbow Text Heading -->
+    <h1>this IS marselo.site</h1>
+
+    <!-- Image forced into 16:9 -->
+    <img src="marrrselo.jpg" alt="Marselo" class="stretched-image">
+
+</body>
+</html>
