@@ -48,6 +48,153 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             border-radius: 8px; /* Slight rounding for aesthetics */
         }
+
+        /* Canvas that sits on top of the page and draws the cursor trail */
+        #trail {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* never blocks clicks */
+            z-index: 9999;
+        }
+
+        /* ---------- Little guy assistant ---------- */
+        #pal {
+            position: fixed;
+            right: 12px;
+            bottom: 8px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            text-align: left;
+        }
+        #pal button, #pal input { font-family: inherit; }
+        #pal :focus-visible { outline: 3px solid #4b0082; outline-offset: 2px; }
+
+        #panel {
+            width: min(310px, calc(100vw - 24px));
+            max-height: 60vh;
+            overflow-y: auto;
+            background: #fff;
+            border: 3px solid #222;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 4px 4px 0 #222;
+        }
+        #panel[hidden] { display: none; }
+        #panel h2 { margin: 0 0 8px; font-size: 1rem; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .chip {
+            border: 2px solid #222;
+            background: #fff;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .chip:hover { background: #ffee58; }
+        .chip:active { transform: translateY(1px); }
+        .say-row { display: flex; gap: 6px; margin-bottom: 12px; }
+        .say-row input {
+            flex: 1;
+            min-width: 0;
+            border: 2px solid #222;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 0.9rem;
+        }
+        .setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; font-size: 0.9rem; }
+        .setting input[type="range"] { width: 130px; }
+
+        #bubble {
+            position: relative;
+            max-width: 250px;
+            background: #fff;
+            border: 3px solid #222;
+            border-radius: 18px;
+            padding: 10px 14px;
+            margin-right: 18px;
+            font-size: 1rem;
+            line-height: 1.35;
+            box-shadow: 4px 4px 0 #222;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px) scale(0.95);
+            transform-origin: bottom right;
+            transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+            pointer-events: none;
+        }
+        #bubble.show { opacity: 1; visibility: visible; transform: none; }
+        #bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            right: 26px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-right: 3px solid #222;
+            border-bottom: 3px solid #222;
+            transform: rotate(45deg);
+        }
+
+        .guy-row { position: relative; }
+        #guyBtn {
+            display: block;
+            width: 110px;
+            padding: 0;
+            border: 0;
+            background: none;
+            cursor: pointer;
+            transform-origin: bottom center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #guyBtn img {
+            display: block;
+            width: 100%;
+            height: auto;
+            user-select: none;
+            -webkit-user-drag: none;
+            transform-origin: bottom center;
+            animation: bob 3s ease-in-out infinite;
+            filter: drop-shadow(0 6px 4px rgba(0,0,0,0.25));
+        }
+        #pal.talking #guyBtn img { animation: yap 0.28s ease-in-out infinite; }
+        #guyBtn:hover img { animation: wiggle 0.4s ease-in-out infinite; }
+        #guyBtn:active { transform: scale(0.94); }
+        #chatToggle {
+            position: absolute;
+            left: -62px;
+            bottom: 10px;
+            border: 2px solid #222;
+            background: #ffee58;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #222;
+        }
+        #chatToggle:hover { background: #fff; }
+
+        @keyframes bob    { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-6px) rotate(2deg); } }
+        @keyframes yap    { 0%,100% { transform: scale(1, 1); } 50% { transform: scale(1.07, 0.93); } }
+        @keyframes wiggle { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+        @media (max-width: 1100px) {
+            body { box-sizing: border-box; padding-bottom: 190px; }
+        }
+        @media (max-width: 500px) {
+            #guyBtn { width: 88px; }
+            #chatToggle { left: -58px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #guyBtn img, #pal.talking #guyBtn img, #guyBtn:hover img { animation: none; }
+            #bubble { transition: none; }
+        }
     </style>
 </head>
 <body>
@@ -57,6 +204,366 @@
 
     <!-- Image forced into 16:9 -->
     <img src="marselopic.jpg" alt="Marselo" class="stretched-image">
+
+    <!-- Little guy assistant -->
+    <div id="pal">
+        <div id="panel" hidden>
+            <h2>talk to the little guy</h2>
+            <div class="chips">
+                <button class="chip" data-act="hi">say hi</button>
+                <button class="chip" data-act="how">how are you</button>
+                <button class="chip" data-act="random">random</button>
+                <button class="chip" data-act="joke">joke</button>
+                <button class="chip" data-act="roast">roast me</button>
+                <button class="chip" data-act="yell">YELL</button>
+                <button class="chip" data-act="sing">sing</button>
+                <button class="chip" data-act="shush">shush</button>
+            </div>
+            <form class="say-row" id="sayForm">
+                <input id="sayInput" type="text" maxlength="120" placeholder="say something to him" autocomplete="off" aria-label="Say something to the little guy">
+                <button class="chip" type="submit">send</button>
+            </form>
+            <label class="setting"><span>voice on</span><input id="optVoice" type="checkbox" checked></label>
+            <label class="setting"><span>chatty mode</span><input id="optChatty" type="checkbox" checked></label>
+            <label class="setting"><span>voice pitch</span><input id="optPitch" type="range" min="0.5" max="2" step="0.1" value="1.7"></label>
+            <label class="setting"><span>talk speed</span><input id="optRate" type="range" min="0.6" max="1.6" step="0.1" value="1.1"></label>
+        </div>
+        <div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span></div>
+        <div class="guy-row">
+            <button id="chatToggle" aria-expanded="false" aria-controls="panel">talk</button>
+            <button id="guyBtn" aria-label="Poke the little guy"><img src="guy.png" alt="A round little guy with a huge smile and very long legs"></button>
+        </div>
+    </div>
+
+    <!-- Rainbow cursor trail -->
+    <canvas id="trail" aria-hidden="true"></canvas>
+    <script>
+        (function () {
+            // Skip the effect for people who prefer reduced motion
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            var canvas = document.getElementById('trail');
+            var ctx = canvas.getContext('2d');
+            var points = [];
+            var LIFETIME = 700;   // how long (ms) each trail point lasts
+            var MAX_WIDTH = 7;    // thickest part of the trail, near the cursor
+            var running = false;
+
+            function resize() {
+                var dpr = window.devicePixelRatio || 1;
+                canvas.width = window.innerWidth * dpr;
+                canvas.height = window.innerHeight * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Works for mouse, pen and touch
+            window.addEventListener('pointermove', function (e) {
+                points.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+                if (!running) {
+                    running = true;
+                    requestAnimationFrame(draw);
+                }
+            });
+
+            function draw(now) {
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+                // Drop points that have faded out
+                while (points.length && now - points[0].t > LIFETIME) points.shift();
+
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                for (var i = 1; i < points.length; i++) {
+                    var a = points[i - 1];
+                    var b = points[i];
+                    var life = 1 - (now - b.t) / LIFETIME; // 1 = fresh, 0 = gone
+
+                    // Hue is tied to when the point was made, so the colors
+                    // run along the trail like a rainbow and keep shifting.
+                    var hue = (b.t * 0.35) % 360;
+
+                    ctx.strokeStyle = 'hsla(' + hue + ', 100%, 55%, ' + life + ')';
+                    ctx.lineWidth = Math.max(1, MAX_WIDTH * life);
+                    ctx.beginPath();
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                    ctx.stroke();
+                }
+
+                if (points.length > 1) {
+                    requestAnimationFrame(draw);
+                } else {
+                    running = false;
+                    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                }
+            }
+        })();
+    </script>
+
+    <script>
+        (function () {
+            var $ = function (id) { return document.getElementById(id); };
+            var pal = $('pal'), bubble = $('bubble'), bubbleText = $('bubbleText');
+            var panel = $('panel'), toggle = $('chatToggle');
+            var synth = window.speechSynthesis;
+            var state = { voice: true, chatty: true, pitch: 1.7, rate: 1.1, interacted: false };
+            var typeTimer, hideTimer, lastSaid = '', lastActive = Date.now(), token = 0, voice = null;
+
+            /* ---------- what he says ---------- */
+            var L = {
+                hi: [
+                    'hi', 'hi hi hi hi hi hi hi hi', 'HELLO HUMAN. i am the website',
+                    'oh. you\'re here. cool cool cool', 'welcome to marselo.site. there is nothing here but me and a jpeg',
+                    'hello. i have been standing here for hours. i have no choice. i have no chair'
+                ],
+                how: [
+                    'i am doing great. i am a circle', 'how are YOU. no seriously. i need to know',
+                    'i\'m fine. my legs are 4 meters long and i have never once been sore',
+                    '10 out of 10. no wait. 11 out of 10', 'i woke up and chose being a circle',
+                    'good. my mouth is open and i can\'t close it. send help. jk i love it'
+                ],
+                random: [
+                    'i have no bones and i must walk', 'did you drink water today. no? me neither. i\'m a circle',
+                    'this website runs on vibes and one jpeg', 'i can see you blinking',
+                    'my legs are a different size than my body and nobody has said anything',
+                    'breaking news. i am still here', 'bonk', 'skill issue', 'ratio',
+                    'no thoughts. head full of mouth', 'mouth big. legs long. life good',
+                    'the stretched marselo pic is not a bug it\'s a lifestyle',
+                    'if you leave this tab i will be sad for 0.3 seconds',
+                    'every time you move the mouse a rainbow comes out. i did that. (i did not do that)',
+                    'i could eat a whole sandwich. i have no stomach. i would still try',
+                    'be honest. did you come here for me or the rainbow cursor',
+                    'what if the real website was the friends we made along the way. no. it\'s me. i am the website',
+                    'fun fact. i do not know any fun facts',
+                    'today\'s forecast. 100 percent chance of circle'
+                ],
+                joke: [
+                    'what do you call a circle with legs. me. the answer is me',
+                    'knock knock. ... i forgot the rest. i\'m a circle',
+                    'why did the website cross the road. it didn\'t. it has no legs. i do. i win',
+                    'i told my legs a joke and they walked away. wait that\'s just my life',
+                    'what\'s round and has opinions. correct. it\'s me again'
+                ],
+                roast: [
+                    'you came to marselo.site and you\'re talking to a circle. respect',
+                    'you moved your mouse like 400 times to get here. cardio',
+                    'i\'d roast you but i\'m one circle and two long legs. stay safe out there',
+                    'you clicked a button that says roast me. bold. brave. also very funny',
+                    'your cursor is leaving a rainbow and your tabs are probably a disaster. i can feel it'
+                ],
+                yell: [
+                    'HELLO', 'AAAAAAAAAAAAA', 'I AM SO ALIVE', 'WE ARE SO BACK',
+                    'NOBODY ASKED BUT I AM HERE', 'GRAAAAAAAAAH', 'PLEASE CLAP'
+                ],
+                sing: [
+                    'laaaa la la la laaaaa la la la', 'doo doo doo doo doooo doo doo',
+                    'mmm mmm mmm mmm mmmmmmm', 'na na na na na na na na hey'
+                ],
+                shush: [
+                    '...', 'ok ok ok ok. i\'m quiet. [loudly breathing]', 'fine. silence. i can do silence. watch me',
+                    'shhhhhh. (that was me shushing myself)'
+                ],
+                poke: [
+                    'ow', 'ow. that was my face', 'hey', 'bonk', 'stop it. no. keep going', 'that tickles. i have no body how',
+                    'i felt that. in my legs', 'eep', 'do it again. dare you', 'you have 9 more pokes before i say something weird',
+                    'boop', 'yes. i am real. no you can\'t take me home'
+                ],
+                intro: [
+                    'hi. click me. or don\'t. i\'m a website guy not a cop',
+                    'hi. poke me. i dare you'
+                ]
+            };
+
+            var rules = [
+                [/\b(hi|hello|hey|yo|sup|hii+)\b/i, L.hi],
+                [/how (are|r) (you|u)|hru|how('?s| is) it going/i, L.how],
+                [/who are you|what are you|your name|what'?s your name/i, [
+                    'i am the little guy. that\'s the whole resume',
+                    'i am a circle with legs. nobody has named me. do it. no wait don\'t'
+                ]],
+                [/joke|funny|make me laugh/i, L.joke],
+                [/roast/i, L.roast],
+                [/\b(love|ily|cute|cool|good|best|goat|awesome)\b/i, [
+                    'stop it. no keep going', 'i\'m blushing. i can\'t. i\'m a circle but spiritually yes',
+                    'thank you. i accept this compliment on behalf of all circles'
+                ]],
+                [/\b(bye|cya|goodbye|gn|goodnight|leaving|gtg)\b/i, [
+                    'no. stay. ok fine go. but i\'ll be here. forever. in the code',
+                    'bye. i will stand here and not blink. like a normal guy'
+                ]],
+                [/marselo/i, [
+                    'marselo? never heard of him. (he\'s the stretched guy. he\'s doing great)',
+                    'marselo is the main character. i am the side character with the best legs'
+                ]],
+                [/\b(sad|tired|depressed|bad day|anxious|stressed)\b/i, [
+                    'that sucks, genuinely. drink some water. i\'ll stand here and be a circle for you',
+                    'i\'m sorry. take a breath. i\'m not going anywhere. i literally can\'t'
+                ]],
+                [/\b(help|how do i|how to)\b/i, [
+                    'i cannot help. i am a circle. but i believe in you', 'have you tried turning it off and on again. me i mean. no. don\'t'
+                ]],
+                [/\b(bruh|lol|lmao|haha|funny)\b/i, ['lmao', 'bruh', 'fr fr', 'ok that\'s kinda funny actually']],
+                [/\?\s*$/, [
+                    'great question. no idea. next', 'the answer is yes. or no. depends. i wasn\'t listening',
+                    'ask me again but louder'
+                ]]
+            ];
+            var fallback = [
+                'i don\'t understand but i respect it', 'word. no clue. but word', 'mhm. mhm mhm. yeah. totally. no idea what you said',
+                'that is the most interesting thing anyone has typed to a circle today', 'ok.', 'based', 'sure. why not'
+            ];
+
+            function pick(arr) {
+                var t, tries = 0;
+                do { t = arr[Math.floor(Math.random() * arr.length)]; tries++; }
+                while (arr.length > 1 && t === lastSaid && tries < 10);
+                return t;
+            }
+
+            /* ---------- voice ---------- */
+            function loadVoice() {
+                if (!synth) return;
+                var v = synth.getVoices();
+                voice = null;
+                for (var i = 0; i < v.length; i++) {
+                    if (/^en/i.test(v[i].lang)) { voice = v[i]; break; }
+                }
+            }
+            if (synth) {
+                loadVoice();
+                if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoice;
+            }
+
+            function speak(text, o, myToken) {
+                if (!state.voice || !synth || !state.interacted) return false;
+                try {
+                    var u = new SpeechSynthesisUtterance(text.replace(/[^\w\s.,!?'-]/g, ' '));
+                    u.pitch = (o && o.pitch) || state.pitch;
+                    u.rate = (o && o.rate) || state.rate;
+                    u.volume = (o && o.volume) || 1;
+                    if (voice) u.voice = voice;
+                    u.onend = u.onerror = function () { if (myToken === token) stopTalking(text.length); };
+                    synth.speak(u);
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            /* ---------- bubble ---------- */
+            function stopTalking(len) {
+                pal.classList.remove('talking');
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(function () { bubble.classList.remove('show'); }, 2200 + (len || 20) * 25);
+            }
+
+            function say(text, o) {
+                o = o || {};
+                var myToken = ++token;
+                lastSaid = text;
+                clearInterval(typeTimer);
+                clearTimeout(hideTimer);
+                if (synth) synth.cancel();
+
+                bubble.classList.add('show');
+                bubbleText.textContent = '';
+                pal.classList.add('talking');
+
+                var spoke = speak(text, o, myToken);
+                var i = 0;
+                typeTimer = setInterval(function () {
+                    i++;
+                    bubbleText.textContent = text.slice(0, i);
+                    if (i >= text.length) {
+                        clearInterval(typeTimer);
+                        if (!spoke) stopTalking(text.length);
+                    }
+                }, 28);
+            }
+
+            function shush() {
+                token++;
+                clearInterval(typeTimer);
+                if (synth) synth.cancel();
+                say(pick(L.shush), { volume: 0.4 });
+            }
+
+            /* ---------- actions ---------- */
+            function act(name) {
+                lastActive = Date.now();
+                if (name === 'yell') return say(pick(L.yell) + '!!!', { pitch: 2, rate: 1.3 });
+                if (name === 'sing') return say(pick(L.sing), { pitch: 2, rate: 0.7 });
+                if (name === 'shush') return shush();
+                say(pick(L[name] || L.random));
+            }
+
+            function reply(text) {
+                for (var i = 0; i < rules.length; i++) {
+                    if (rules[i][0].test(text)) return say(pick(rules[i][1]));
+                }
+                say(pick(fallback));
+            }
+
+            /* ---------- wiring ---------- */
+            function markInteracted() { state.interacted = true; lastActive = Date.now(); }
+            document.addEventListener('pointerdown', markInteracted);
+            document.addEventListener('keydown', markInteracted);
+
+            $('guyBtn').addEventListener('click', function () { markInteracted(); act('poke'); });
+
+            toggle.addEventListener('click', function () {
+                markInteracted();
+                var open = panel.hidden;
+                panel.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+                toggle.textContent = open ? 'close' : 'talk';
+                if (open) { $('sayInput').focus(); }
+            });
+
+            panel.addEventListener('click', function (e) {
+                var b = e.target.closest('[data-act]');
+                if (b) { markInteracted(); act(b.getAttribute('data-act')); }
+            });
+
+            $('sayForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var input = $('sayInput');
+                var text = input.value.trim();
+                if (!text) return;
+                markInteracted();
+                input.value = '';
+                reply(text);
+            });
+
+            $('optVoice').addEventListener('change', function (e) {
+                state.voice = e.target.checked;
+                if (!state.voice && synth) synth.cancel();
+                say(state.voice ? 'voice on. i can speak again. unfortunately for you' : 'voice off. i will now type like a normal guy');
+            });
+            $('optChatty').addEventListener('change', function (e) {
+                state.chatty = e.target.checked;
+                say(state.chatty ? 'chatty mode on. i will say stuff when you least expect it' : 'chatty mode off. i will wait. quietly. staring');
+            });
+            $('optPitch').addEventListener('input', function (e) { state.pitch = parseFloat(e.target.value); });
+            $('optPitch').addEventListener('change', function () { say('testing. testing. is this my voice'); });
+            $('optRate').addEventListener('input', function (e) { state.rate = parseFloat(e.target.value); });
+            $('optRate').addEventListener('change', function () { say('this is how fast i talk now. hope you like it'); });
+
+            /* ---------- idle chatter ---------- */
+            function idleLoop() {
+                var wait = 14000 + Math.random() * 12000;
+                setTimeout(function () {
+                    if (state.chatty && !document.hidden && Date.now() - lastActive > 9000) {
+                        say(pick(L.random));
+                    }
+                    idleLoop();
+                }, wait);
+            }
+            setTimeout(function () { say(pick(L.intro)); }, 1200);
+            idleLoop();
+        })();
+    </script>
 
 </body>
 </html>
