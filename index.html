@@ -109,6 +109,7 @@
         }
         .setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; font-size: 0.9rem; }
         .setting input[type="range"] { width: 130px; }
+        .setting select { max-width: 170px; font-family: inherit; font-size: 0.85rem; border: 2px solid #222; border-radius: 8px; padding: 3px 4px; background: #fff; }
 
         #bubble {
             position: relative;
@@ -205,10 +206,10 @@
     <!-- Image forced into 16:9 -->
     <img src="marselopic.jpg" alt="Marselo" class="stretched-image">
 
-    <!-- Little guy assistant -->
+    <!-- Marselo assistant -->
     <div id="pal">
         <div id="panel" hidden>
-            <h2>talk to the little guy</h2>
+            <h2>talk to marselo</h2>
             <div class="chips">
                 <button class="chip" data-act="hi">say hi</button>
                 <button class="chip" data-act="how">how are you</button>
@@ -220,18 +221,19 @@
                 <button class="chip" data-act="shush">shush</button>
             </div>
             <form class="say-row" id="sayForm">
-                <input id="sayInput" type="text" maxlength="120" placeholder="say something to him" autocomplete="off" aria-label="Say something to the little guy">
+                <input id="sayInput" type="text" maxlength="120" placeholder="say something to him" autocomplete="off" aria-label="Say something to Marselo">
                 <button class="chip" type="submit">send</button>
             </form>
             <label class="setting"><span>voice on</span><input id="optVoice" type="checkbox" checked></label>
+            <label class="setting"><span>voice</span><select id="voiceSelect" aria-label="Voice"></select></label>
             <label class="setting"><span>chatty mode</span><input id="optChatty" type="checkbox" checked></label>
-            <label class="setting"><span>voice pitch</span><input id="optPitch" type="range" min="0.5" max="2" step="0.1" value="1.7"></label>
-            <label class="setting"><span>talk speed</span><input id="optRate" type="range" min="0.6" max="1.6" step="0.1" value="1.1"></label>
+            <label class="setting"><span>voice pitch</span><input id="optPitch" type="range" min="0.1" max="2" step="0.1" value="1"></label>
+            <label class="setting"><span>talk speed</span><input id="optRate" type="range" min="0.6" max="1.6" step="0.1" value="1"></label>
         </div>
         <div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span></div>
         <div class="guy-row">
             <button id="chatToggle" aria-expanded="false" aria-controls="panel">talk</button>
-            <button id="guyBtn" aria-label="Poke the little guy"><img src="guy.png" alt="A round little guy with a huge smile and very long legs"></button>
+            <button id="guyBtn" aria-label="Poke Marselo"><img src="guy.png" alt="Marselo, a little guy with a huge smile and very long legs"></button>
         </div>
     </div>
 
@@ -309,103 +311,113 @@
             var pal = $('pal'), bubble = $('bubble'), bubbleText = $('bubbleText');
             var panel = $('panel'), toggle = $('chatToggle');
             var synth = window.speechSynthesis;
-            var state = { voice: true, chatty: true, pitch: 1.7, rate: 1.1, interacted: false };
+            var state = { voice: true, chatty: true, pitch: 1, rate: 1, interacted: false };
             var typeTimer, hideTimer, lastSaid = '', lastActive = Date.now(), token = 0, voice = null;
 
             /* ---------- what he says ---------- */
             var L = {
                 hi: [
-                    'hi', 'hi hi hi hi hi hi hi hi', 'HELLO HUMAN. i am the website',
+                    'hi', 'hi hi hi hi hi hi hi hi', 'HELLO HUMAN. i am marselo',
                     'oh. you\'re here. cool cool cool', 'welcome to marselo.site. there is nothing here but me and a jpeg',
-                    'hello. i have been standing here for hours. i have no choice. i have no chair'
+                    'hello. i have been standing here for hours. i have no choice. i have no chair',
+                    'hi. i\'m marselo. i like colgate'
                 ],
                 how: [
-                    'i am doing great. i am a circle', 'how are YOU. no seriously. i need to know',
+                    'i am doing great. i just used colgate', 'how are YOU. no seriously. i need to know',
                     'i\'m fine. my legs are 4 meters long and i have never once been sore',
-                    '10 out of 10. no wait. 11 out of 10', 'i woke up and chose being a circle',
+                    '10 out of 10. no wait. 11 out of 10', 'i woke up and chose colgate',
                     'good. my mouth is open and i can\'t close it. send help. jk i love it'
                 ],
                 random: [
-                    'i have no bones and i must walk', 'did you drink water today. no? me neither. i\'m a circle',
+                    'i have no bones and i must walk', 'did you brush your teeth today. no? colgate. now.',
                     'this website runs on vibes and one jpeg', 'i can see you blinking',
                     'my legs are a different size than my body and nobody has said anything',
                     'breaking news. i am still here', 'bonk', 'skill issue', 'ratio',
                     'no thoughts. head full of mouth', 'mouth big. legs long. life good',
-                    'the stretched marselo pic is not a bug it\'s a lifestyle',
+                    'this stretched pic of me is not a bug it\'s a lifestyle',
                     'if you leave this tab i will be sad for 0.3 seconds',
                     'every time you move the mouse a rainbow comes out. i did that. (i did not do that)',
                     'i could eat a whole sandwich. i have no stomach. i would still try',
                     'be honest. did you come here for me or the rainbow cursor',
                     'what if the real website was the friends we made along the way. no. it\'s me. i am the website',
-                    'fun fact. i do not know any fun facts',
-                    'today\'s forecast. 100 percent chance of circle'
+                    'fun fact. i like colgate',
+                    'another fun fact. colgate',
+                    'today\'s forecast. 100 percent chance of colgate',
+                    'i really really like colgate. i can\'t stress this enough',
+                    'my mouth is this big because of all the colgate. science',
+                    'some people have a favorite color. mine is colgate. it\'s a color. don\'t check'
                 ],
                 joke: [
-                    'what do you call a circle with legs. me. the answer is me',
-                    'knock knock. ... i forgot the rest. i\'m a circle',
+                    'what do you call a guy with a huge mouth and a tube of colgate. marselo. the answer is marselo',
+                    'knock knock. ... i forgot the rest. i\'m marselo',
                     'why did the website cross the road. it didn\'t. it has no legs. i do. i win',
                     'i told my legs a joke and they walked away. wait that\'s just my life',
-                    'what\'s round and has opinions. correct. it\'s me again'
+                    'who has long legs and minty fresh breath. correct. it\'s me again'
                 ],
                 roast: [
-                    'you came to marselo.site and you\'re talking to a circle. respect',
+                    'you came to marselo.site and you\'re talking to me. respect',
                     'you moved your mouse like 400 times to get here. cardio',
-                    'i\'d roast you but i\'m one circle and two long legs. stay safe out there',
+                    'i\'d roast you but i\'m one guy with long legs and fresh breath. stay safe out there',
                     'you clicked a button that says roast me. bold. brave. also very funny',
-                    'your cursor is leaving a rainbow and your tabs are probably a disaster. i can feel it'
+                    'your cursor is leaving a rainbow and your tabs are probably a disaster. i can feel it',
+                    'when did you last use colgate. be honest. i can tell'
                 ],
                 yell: [
-                    'HELLO', 'AAAAAAAAAAAAA', 'I AM SO ALIVE', 'WE ARE SO BACK',
-                    'NOBODY ASKED BUT I AM HERE', 'GRAAAAAAAAAH', 'PLEASE CLAP'
+                    'HELLO', 'AAAAAAAAAAAAA', 'I LOVE COLGATE', 'WE ARE SO BACK', 'COLGATE',
+                    'NOBODY ASKED BUT I AM HERE', 'GRAAAAAAAAAH', 'PLEASE CLAP', 'MY NAME IS MARSELO'
                 ],
                 sing: [
                     'laaaa la la la laaaaa la la la', 'doo doo doo doo doooo doo doo',
-                    'mmm mmm mmm mmm mmmmmmm', 'na na na na na na na na hey'
+                    'colgate colgate colgate. mmm colgate', 'na na na na na na na na hey'
                 ],
                 shush: [
                     '...', 'ok ok ok ok. i\'m quiet. [loudly breathing]', 'fine. silence. i can do silence. watch me',
                     'shhhhhh. (that was me shushing myself)'
                 ],
                 poke: [
-                    'ow', 'ow. that was my face', 'hey', 'bonk', 'stop it. no. keep going', 'that tickles. i have no body how',
+                    'ow', 'ow. that was my face', 'hey', 'bonk', 'stop it. no. keep going', 'that tickles',
                     'i felt that. in my legs', 'eep', 'do it again. dare you', 'you have 9 more pokes before i say something weird',
-                    'boop', 'yes. i am real. no you can\'t take me home'
+                    'boop', 'yes. i am real. no you can\'t take me home', 'that\'s my name. don\'t wear it out. marselo'
                 ],
                 intro: [
-                    'hi. click me. or don\'t. i\'m a website guy not a cop',
-                    'hi. poke me. i dare you'
+                    'hi. i\'m marselo. click me. or don\'t. i\'m a website guy not a cop',
+                    'hi. poke me. i dare you. also colgate'
                 ]
             };
 
             var rules = [
+                [/colgate|toothpaste|teeth|tooth|brush/i, [
+                    'COLGATE. you said colgate. my favorite word', 'yes. colgate. i love it. tell me more',
+                    'colgate is the best. i said that. no one can stop me', 'i have never met a colgate i didn\'t like'
+                ]],
                 [/\b(hi|hello|hey|yo|sup|hii+)\b/i, L.hi],
                 [/how (are|r) (you|u)|hru|how('?s| is) it going/i, L.how],
                 [/who are you|what are you|your name|what'?s your name/i, [
-                    'i am the little guy. that\'s the whole resume',
-                    'i am a circle with legs. nobody has named me. do it. no wait don\'t'
+                    'i am marselo. i like colgate. that\'s the whole resume',
+                    'marselo. big mouth. long legs. loves colgate'
                 ]],
                 [/joke|funny|make me laugh/i, L.joke],
                 [/roast/i, L.roast],
                 [/\b(love|ily|cute|cool|good|best|goat|awesome)\b/i, [
-                    'stop it. no keep going', 'i\'m blushing. i can\'t. i\'m a circle but spiritually yes',
-                    'thank you. i accept this compliment on behalf of all circles'
+                    'stop it. no keep going', 'i\'m blushing. i can\'t. i have no cheeks. spiritually yes',
+                    'thank you. i accept this compliment on behalf of all marselos'
                 ]],
                 [/\b(bye|cya|goodbye|gn|goodnight|leaving|gtg)\b/i, [
                     'no. stay. ok fine go. but i\'ll be here. forever. in the code',
                     'bye. i will stand here and not blink. like a normal guy'
                 ]],
                 [/marselo/i, [
-                    'marselo? never heard of him. (he\'s the stretched guy. he\'s doing great)',
-                    'marselo is the main character. i am the side character with the best legs'
+                    'that\'s me. hi. i\'m marselo', 'marselo is my name. don\'t wear it out',
+                    'you said my name. i heard that. i\'m smiling. i\'m always smiling'
                 ]],
                 [/\b(sad|tired|depressed|bad day|anxious|stressed)\b/i, [
-                    'that sucks, genuinely. drink some water. i\'ll stand here and be a circle for you',
+                    'that sucks, genuinely. drink some water. i\'ll stand here with you',
                     'i\'m sorry. take a breath. i\'m not going anywhere. i literally can\'t'
                 ]],
                 [/\b(help|how do i|how to)\b/i, [
-                    'i cannot help. i am a circle. but i believe in you', 'have you tried turning it off and on again. me i mean. no. don\'t'
+                    'i cannot help. i am marselo. but i believe in you', 'have you tried turning it off and on again. me i mean. no. don\'t'
                 ]],
-                [/\b(bruh|lol|lmao|haha|funny)\b/i, ['lmao', 'bruh', 'fr fr', 'ok that\'s kinda funny actually']],
+                [/\b(bruh|lol|lmao|haha)\b/i, ['lmao', 'bruh', 'fr fr', 'ok that\'s kinda funny actually']],
                 [/\?\s*$/, [
                     'great question. no idea. next', 'the answer is yes. or no. depends. i wasn\'t listening',
                     'ask me again but louder'
@@ -413,7 +425,8 @@
             ];
             var fallback = [
                 'i don\'t understand but i respect it', 'word. no clue. but word', 'mhm. mhm mhm. yeah. totally. no idea what you said',
-                'that is the most interesting thing anyone has typed to a circle today', 'ok.', 'based', 'sure. why not'
+                'that is the most interesting thing anyone has typed to marselo today', 'ok.', 'based', 'sure. why not',
+                'cool. anyway. colgate'
             ];
 
             function pick(arr) {
@@ -424,12 +437,42 @@
             }
 
             /* ---------- voice ---------- */
+            var voiceList = [];
+            // Funny-ish male voices that ship with common devices, best match first
+            var preferred = [
+                /microsoft (david|mark|guy)/i, /google uk english male/i, /\bfred\b/i, /\bralph\b/i,
+                /\bdaniel\b/i, /\balex\b/i, /\baaron\b/i, /\boliver\b/i, /\btom\b/i, /\brishi\b/i, /\bmale\b/i
+            ];
+            var notMale = /female|zira|hazel|susan|samantha|karen|victoria|moira|fiona|tessa|allison|ava|serena/i;
+
             function loadVoice() {
                 if (!synth) return;
-                var v = synth.getVoices();
-                voice = null;
-                for (var i = 0; i < v.length; i++) {
-                    if (/^en/i.test(v[i].lang)) { voice = v[i]; break; }
+                voiceList = synth.getVoices().filter(function (v) { return /^en/i.test(v.lang); });
+                var sel = $('voiceSelect');
+                var keep = voice && voice.voiceURI;
+
+                if (!voice || !voiceList.some(function (v) { return v.voiceURI === keep; })) {
+                    voice = null;
+                    for (var i = 0; i < preferred.length && !voice; i++) {
+                        for (var j = 0; j < voiceList.length; j++) {
+                            if (preferred[i].test(voiceList[j].name) && !notMale.test(voiceList[j].name)) { voice = voiceList[j]; break; }
+                        }
+                    }
+                    if (!voice) voice = voiceList[0] || null;
+                }
+
+                sel.innerHTML = '';
+                voiceList.forEach(function (v) {
+                    var o = document.createElement('option');
+                    o.value = v.voiceURI;
+                    o.textContent = v.name;
+                    if (voice && v.voiceURI === voice.voiceURI) o.selected = true;
+                    sel.appendChild(o);
+                });
+                if (!voiceList.length) {
+                    var o = document.createElement('option');
+                    o.textContent = 'default voice';
+                    sel.appendChild(o);
                 }
             }
             if (synth) {
@@ -492,8 +535,8 @@
             /* ---------- actions ---------- */
             function act(name) {
                 lastActive = Date.now();
-                if (name === 'yell') return say(pick(L.yell) + '!!!', { pitch: 2, rate: 1.3 });
-                if (name === 'sing') return say(pick(L.sing), { pitch: 2, rate: 0.7 });
+                if (name === 'yell') return say(pick(L.yell) + '!!!', { pitch: Math.min(2, state.pitch + 0.3), rate: 1.25 });
+                if (name === 'sing') return say(pick(L.sing), { pitch: Math.min(2, state.pitch + 0.2), rate: 0.75 });
                 if (name === 'shush') return shush();
                 say(pick(L[name] || L.random));
             }
@@ -539,14 +582,21 @@
             $('optVoice').addEventListener('change', function (e) {
                 state.voice = e.target.checked;
                 if (!state.voice && synth) synth.cancel();
-                say(state.voice ? 'voice on. i can speak again. unfortunately for you' : 'voice off. i will now type like a normal guy');
+                say(state.voice ? 'voice on. marselo can speak again. unfortunately for you' : 'voice off. i will now type like a normal guy');
             });
             $('optChatty').addEventListener('change', function (e) {
                 state.chatty = e.target.checked;
                 say(state.chatty ? 'chatty mode on. i will say stuff when you least expect it' : 'chatty mode off. i will wait. quietly. staring');
             });
+            $('voiceSelect').addEventListener('change', function (e) {
+                markInteracted();
+                for (var i = 0; i < voiceList.length; i++) {
+                    if (voiceList[i].voiceURI === e.target.value) { voice = voiceList[i]; break; }
+                }
+                say('is this the voice. i think this is the voice. colgate');
+            });
             $('optPitch').addEventListener('input', function (e) { state.pitch = parseFloat(e.target.value); });
-            $('optPitch').addEventListener('change', function () { say('testing. testing. is this my voice'); });
+            $('optPitch').addEventListener('change', function () { say('testing. testing. is this my voice. colgate'); });
             $('optRate').addEventListener('input', function (e) { state.rate = parseFloat(e.target.value); });
             $('optRate').addEventListener('change', function () { say('this is how fast i talk now. hope you like it'); });
 
