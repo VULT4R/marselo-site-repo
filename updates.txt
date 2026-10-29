@@ -1,0 +1,107 @@
+MARSELO.SITE - UPDATE LOG
+=========================
+Newest update on top. Every update gets a new entry here.
+
+
+UPDATE 4  (current)
+-------------------
+Laser cutter
+  * Marselo no longer dies from the laser, with invincibility on OR off. He just gets
+    cut and keeps living (his head keeps shrinking with every cut, forever).
+
+Pick up the parts
+  * The pieces on the floor (laser slices, loose bones after the acid) can now be grabbed
+    with the mouse, carried, thrown, sliced again with the laser, or deleted with X.
+  * Grabbing a limb the chainsaw ripped off no longer knocks Marselo over / makes him sad.
+
+Weapons bar
+  * Back to ONE row. The tools now shrink to fit the window instead of wrapping onto a
+    second row (and scroll sideways only if the window is really tiny), so the controls
+    text is visible again.
+
+New maps  (left panel: map -> room / beach / city, remembered between visits)
+  * Beach: sea, sailboat, sun, palm trees, umbrella, towel, sand floor.
+  * City: skyline, sidewalk, road with lane markings and a crosswalk, street lamp,
+    traffic light.
+
+Cars
+  * City map: about every 30 seconds (22-38s) a random car (sedan, van or taxi, random
+    colour and speed) drives in from the right and runs Marselo over.
+  * He gets flattened like a cartoon pancake (SPLAT!), stays flat for 3 seconds, then
+    bounces back up (BOING!). Items and loose pieces in the road get bulldozed away.
+  * "spawn car" button in the left panel: spam it to get many cars at once (works on
+    every map, max 14 cars at a time).
+
+Bug fixes
+  * Fixed the map buttons being treated as gravity presets (would have set gravity to NaN).
+
+New voicelines: being flattened (flat) and bouncing back (boing).
+
+
+UPDATE 3
+-------------------
+Base: your index_1.html (your skins panel, walk AI and extinguisher were kept)
+
+New tools
+  + Acid syringe: thrust the needle into Marselo, hold F to inject. He melts from the
+    top down (skin dissolves, skull and bones show underneath, acid drips and a green
+    puddle) while he keeps standing. When he is fully dissolved, break.mp3 plays, he
+    drops, every bone falls to the floor as its own loose piece, and he respawns after 3s.
+  + Sleep syringe: same injection, but he sleeps for 60 seconds (eyes closed, lying
+    down, floating "z"). He does not wake up and does not speak, no matter how much
+    he is hit. He says good morning when he wakes.
+  + Laser cutter: hold F, the beam slices whatever it crosses. Limbs and his head can
+    be sliced; every slice becomes a real physics piece that falls, bounces and can be
+    sliced again, over and over, forever.
+      - invincible OFF: slicing his face kills him, he falls apart and respawns in 3s.
+      - invincible ON:  you can keep cutting him into smaller and smaller pieces forever.
+
+Syringes (how they work)
+  * Needles now stick into him like the sword does (shared stab system), but they
+    stay in; only a fast flick pulls them out.
+  * He stops walking while something is stuck in him so the needle is not walked out.
+
+Skins
+  * The skins panel now shows a picture of every skin, also the locked ones (dimmed).
+  * "Cool shades" are now black aviators.
+
+Walking
+  * Random walking is much slower (panic running when on fire is still fast).
+  * Leg animation is slower to match.
+
+Voicelines
+  * New idle lines in combat mode (he now talks on his own every ~10-19 seconds).
+  * New lines for laser, acid, sleeping and waking up.
+  * More lines in the main talking mode (random, how are you, jokes).
+
+Other
+  * Toolbar wraps onto two rows now that there are 13 tools.
+  * New file: break.mp3 must sit next to index.html.
+  * New files: updates.txt (this log) and README.MD.
+
+
+UPDATE 2  (previous)
+--------------------
+  * Dying respawns after 3 seconds.
+  * Tools always face the way they were spawned (E = right, Q = left); no more
+    horizontal flipping.
+  * A / D now LOCK a tool's angle: after pressing either, the tool stops swaying and
+    stays put until you let go and grab it again.
+  * Random awkward walking for Marselo, and panic running when on fire (no more
+    flying to the ceiling).
+  * Sword hitbox made more forgiving (checks tip and two points along the blade).
+  * Fire extinguisher added (puts Marselo out).
+  * Reset no longer resets the hit counter; hits are saved in the browser.
+  * 7 skins unlocked by total hits (100 / 500 / 1000 / 2000 / 3500 / 5000 / 7500).
+
+
+UPDATE 1  (first combat update)
+-------------------------------
+  * Select a tool, then press E (spawn facing right) or Q (spawn facing left).
+  * Held items swing like real pendulums from the point you grab them.
+  * Chainsaw: rips limbs off, he bleeds for ~5s, blood pool that slowly fades.
+  * Sword can stab and stay stuck; a fast flick pulls it out.
+  * Colgate tube: F sprays white paste with blue stripes.
+  * Health bar, death (he swells, bursts and sprays Colgate), invincibility toggle (I).
+  * Voices: Google online voices and silly voices added so every browser has more
+    than its own system voices.
