@@ -65,6 +65,13 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
   picked up, carried and sliced again. It never kills him; you can keep cutting him
   forever.
 
+### Phone and touchscreen play
+
+* On a phone the on-screen buttons show automatically: ◀ ▶ rotate, **F** use, **+◀ / +▶**
+  spawn the selected tool facing left / right, and the bin deletes the held tool.
+* Tap a tool to select it, or **drag it up out of the bar** to use it immediately.
+* On a PC with a touchscreen, turn on **touchscreen mode** in the left panel.
+
 ### Maps and cars
 
 * Left panel -> **map**: room, beach or city (your choice is remembered).
@@ -72,6 +79,15 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
   flattens Marselo like a cartoon; he bounces back up after 3 seconds.
 * The **spawn car** button (left panel) sends a car on any map. Spam it for traffic.
 * Loose pieces on the floor can be picked up with the mouse (X deletes the held piece).
+
+### Fruit Ninja mode
+
+Open it from the **fruit ninja** button on the main page or the combat panel. Hold the
+mouse button (or your finger) and swipe to slice the flying Marselo variants. You have
+3 hearts, each Marselo that falls uncut costs one. The dark Marselo with a lit fuse is a
+bomb: cutting him ends the game instantly. Golden Marselo is worth 5, slicing 3+ in one
+swipe gives a combo bonus. The game is endless and gets harder; top 10 scores are saved
+in the browser.
 
 ### Health, death, hits and skins
 

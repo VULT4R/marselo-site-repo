@@ -3,7 +3,34 @@ MARSELO.SITE - UPDATE LOG
 Newest update on top. Every update gets a new entry here.
 
 
-UPDATE 4  (current)
+UPDATE 5  (current)
+-------------------
+Phone / touchscreen
+  * New on-screen buttons next to ◀ ▶ F:  "+◀" spawns the selected tool facing left,
+    "+▶" spawns it facing right, and the bin button deletes the held tool. (Same as Q / E / X.)
+    On touch the tool spawns near the top-middle of the screen instead of under the finger.
+  * Drag and drop: touch a tool in the bar and drag it UP into the room to pull it out and
+    use it right away. Sliding the bar sideways still scrolls it.
+  * Maps can be changed on phones again (the map buttons were hidden on small screens),
+    and "spawn car" is there too.
+  * New "touchscreen mode" button in the left panel (remembered): turns the on-screen
+    buttons on even on a Windows PC with a touchscreen. On phones they show automatically.
+  * The "hits" counter no longer hides behind the skins / sound buttons on phones.
+  * Hints change to touch wording when you play with touch.
+
+Fruit Ninja mode  (button "fruit ninja" on the main page, and "fruit ninja mode" in the
+combat panel)
+  * Marselo variants (all the skins, happy and scared faces) are thrown up from the
+    bottom. Hold the mouse button / your finger and swipe to slice them in half.
+  * Endless: waves get bigger and faster the higher your score. 3 hearts: every Marselo
+    you let fall costs a heart; at 0 hearts it is game over.
+  * Dark Marselo with a lit fuse is the BOMB. Cut him and he explodes: instant game over.
+  * Golden Marselo is worth 5. Slicing 3+ in one swipe gives a combo bonus.
+  * High scores (top 10, saved in the browser). Menu shows the top 5, game over shows
+    your score and flags a new high score. Esc or the exit button leaves the mode.
+
+
+UPDATE 4
 -------------------
 Laser cutter
   * Marselo no longer dies from the laser, with invincibility on OR off. He just gets

@@ -398,6 +398,33 @@
         @media (prefers-reduced-motion: reduce) { #slowBadge { transition: none; } }
         #hpBar{height:10px;border:2px solid #222;border-radius:6px;background:#fff;margin:6px 0 0;overflow:hidden}
         #hpFill{height:100%;width:100%;background:#4caf50;transition:width .15s}
+        /* touch support */
+        #toolbar { touch-action: pan-x; }
+        .tool { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+        #physPanel #mapChips { display: flex; }
+        #touchCtl { flex-wrap: wrap; justify-content: flex-end; max-width: 190px; }
+        #arena.touch-on #touchCtl { display: flex; }
+        #touchBtn, #ninjaArenaBtn { width: 100%; margin-top: 6px; border: 2px solid #222; background: #fff; border-radius: 10px; padding: 4px 8px; font-family: inherit; font-size: .85rem; font-weight: bold; cursor: pointer; }
+        #touchBtn.on { background: #ffd740; }
+        @media (max-width: 600px) { #arenaHits { top: 52px; left: auto; right: 10px; transform: none; } }
+        /* fruit ninja */
+        #ninjaBtn { position: fixed; top: 58px; left: 12px; z-index: 1100; border: 3px solid #222; background: #ffd740; color: #222; border-radius: 999px; padding: 8px 16px; font-family: 'Comic Sans MS', 'Comic Sans', cursive; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 3px 3px 0 #222; }
+        #ninjaBtn:hover { background: #ffee58; }
+        #ninjaBtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #222; }
+        #ninja { position: fixed; inset: 0; z-index: 1300; background: #3d2515; touch-action: none; user-select: none; -webkit-user-select: none; }
+        #ninja[hidden] { display: none; }
+        #ninjaCv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+        #ninjaExit { left: 12px; background: #ffee58; }
+        #ninjaMenu { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; background: rgba(20,10,5,.74); color: #fff; text-align: center; overflow: auto; }
+        #ninjaMenu[hidden] { display: none; }
+        #ninjaMenu h2 { margin: 0; font-size: clamp(2rem, 8vw, 3.8rem); text-shadow: 3px 3px 0 #222; }
+        #ninjaMenu .nsub { max-width: 30em; line-height: 1.4; }
+        #ninjaMenu .nsub b { background: #ff5252; border-radius: 6px; padding: 0 6px; }
+        #ninjaMenu .nhs { font-weight: bold; opacity: .85; margin-top: 4px; }
+        #ninjaMenu ol { margin: 0; padding: 0; list-style-position: inside; font-size: 1.3rem; font-weight: bold; }
+        #ninjaMenu li.top { color: #ffd740; }
+        .nbtn { border: 3px solid #222; background: #ffd740; color: #222; border-radius: 999px; padding: 10px 28px; font-family: inherit; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 3px 3px 0 #222; }
+        .nbtn.alt { background: #fff; font-size: 1rem; padding: 6px 20px; }
         #invBtn{width:100%;margin-top:6px;border:2px solid #222;background:#fff;border-radius:10px;padding:4px 8px;font-family:inherit;font-size:.85rem;font-weight:bold;cursor:pointer}
         #invBtn.on{background:#ffd740}
         #carBtn{width:100%;margin-top:6px;border:2px solid #222;background:#fff;border-radius:10px;padding:4px 8px;font-family:inherit;font-size:.85rem;font-weight:bold;cursor:pointer}
@@ -446,6 +473,7 @@
 
     <!-- Combat mode button -->
     <button id="combatBtn" aria-haspopup="dialog">&#9876;&#65039; combat mode</button>
+    <button id="ninjaBtn" aria-haspopup="dialog">&#127825; fruit ninja</button>
 
     <!-- Combat arena -->
     <div id="arena" role="dialog" aria-label="Combat mode" hidden>
@@ -469,6 +497,8 @@
             <div class="row" style="margin-top:8px"><span>map</span></div>
             <div class="presets" id="mapChips"><button class="chip" type="button" data-map="room">room</button><button class="chip" type="button" data-map="beach">beach</button><button class="chip" type="button" data-map="city">city</button></div>
             <button id="carBtn" type="button">spawn car</button>
+            <button id="touchBtn" type="button" aria-pressed="false">touchscreen mode: off</button>
+            <button id="ninjaArenaBtn" type="button">fruit ninja mode</button>
         </div>
         <div id="slowBadge" hidden>SLOW-MO 25%</div>
         <div id="arenaHint"></div>
@@ -476,8 +506,18 @@
             <button type="button" data-key="a" aria-label="Rotate left">&#9664;</button>
             <button type="button" data-key="d" aria-label="Rotate right">&#9654;</button>
             <button type="button" data-key="f" aria-label="Use held item">F</button>
+            <button type="button" data-key="q" aria-label="Spawn selected tool facing left">+&#9664;</button>
+            <button type="button" data-key="e" aria-label="Spawn selected tool facing right">+&#9654;</button>
+            <button type="button" data-key="x" aria-label="Delete held item">&#128465;</button>
         </div>
         <div id="toolbar" role="toolbar" aria-label="Spawn weapons"></div>
+    </div>
+
+    <!-- Fruit Ninja mode -->
+    <div id="ninja" role="dialog" aria-label="Marselo Ninja" hidden>
+        <canvas id="ninjaCv"></canvas>
+        <button class="arena-btn" id="ninjaExit">&larr; exit</button>
+        <div id="ninjaMenu"></div>
     </div>
 
     <!-- Rainbow cursor trail -->
@@ -1810,7 +1850,7 @@
     function setHint() {
         var key = 'none';
         if (grab) key = grab.kind === 'body' ? 'body' : grab.kind === 'piece' ? 'piece' : (HINTS[grab.it.d.id] ? grab.it.d.id : grab.it.d.kind);
-        $('arenaHint').innerHTML = HINTS[key];
+        $('arenaHint').innerHTML = (key === 'none' && touchOn()) ? 'tap a tool below, then tap <b>+&#9654;</b> (faces right) or <b>+&#9664;</b> (faces left) &middot; or drag a tool up from the bar &middot; grab anything and swing it' : HINTS[key];
     }
 
     /* ---- using the held item (F) ---- */
@@ -2410,15 +2450,21 @@
 
     /* ============ input ============ */
     function pos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-    var spawnCand = null, suppressClick = false, sel = null, ptrIn = false;
+    var spawnCand = null, suppressClick = false, sel = null, ptrIn = false, lastPtrType = 'mouse', touchMode = false;
+    try { touchMode = localStorage.getItem('marseloTouch') === '1'; } catch (e) {}
+    function touchOn() { return touchMode || lastPtrType === 'touch' || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches); }
+    function applyTouch() { arena.classList.toggle('touch-on', touchMode); var b = $('touchBtn'); b.textContent = 'touchscreen mode: ' + (touchMode ? 'on' : 'off'); b.classList.toggle('on', touchMode); b.setAttribute('aria-pressed', String(touchMode)); }
+    $('touchBtn').addEventListener('click', function () { touchMode = !touchMode; try { localStorage.setItem('marseloTouch', touchMode ? '1' : '0'); } catch (e) {} applyTouch(); this.blur(); });
+    window.addEventListener('pointerdown', function (e) { lastPtrType = e.pointerType || 'mouse'; }, true);
+    applyTouch();
     function selectTool(id) {
         sel = id;
         Array.prototype.forEach.call(document.querySelectorAll('.tool'), function (b) { b.classList.toggle('sel', b.getAttribute('data-tool') === id); });
-        $('arenaHint').innerHTML = '<b>' + ITEM_BY_ID[id].label + '</b> selected &middot; press <b>E</b> to spawn it facing right, <b>Q</b> to face left';
+        $('arenaHint').innerHTML = '<b>' + ITEM_BY_ID[id].label + '</b> selected &middot; ' + (touchOn() ? 'tap <b>+&#9654;</b> to spawn it facing right, <b>+&#9664;</b> to face left, or drag it up from the bar' : 'press <b>E</b> to spawn it facing right, <b>Q</b> to face left');
     }
     function spawnSel(left) {
-        if (!sel) { $('arenaHint').innerHTML = 'pick a tool in the bar first, then press <b>E</b> or <b>Q</b>'; return; }
-        var x = ptrIn ? ptr.x : W / 2, y = ptrIn ? ptr.y : H * 0.3;
+        if (!sel) { $('arenaHint').innerHTML = touchOn() ? 'tap a tool in the bar first, then tap <b>+&#9664;</b> or <b>+&#9654;</b>' : 'pick a tool in the bar first, then press <b>E</b> or <b>Q</b>'; return; }
+        var tch = touchOn(), x = (!tch && ptrIn) ? ptr.x : W / 2 + (left ? 1 : -1) * W * 0.1, y = (!tch && ptrIn) ? ptr.y : H * 0.3;
         var it = spawnItem(sel, clamp(x, 40, W - 40), Math.min(y, floorY - 40), left ? Math.PI : 0);
         if (it) { it.fl = left ? -1 : 1; it.aim = it.a; SFX.spawn(); }
     }
@@ -2438,7 +2484,8 @@
         if (!open) return;
         if (spawnCand && e.pointerId === spawnCand.pid) {
             var p0 = pos(e); ptr.x = p0.x; ptr.y = p0.y;
-            if (Math.hypot(e.clientX - spawnCand.sx, e.clientY - spawnCand.sy) > 10) {
+            var sdx = e.clientX - spawnCand.sx, sdy = e.clientY - spawnCand.sy;
+            if (spawnCand.touch ? (sdy < -16 && -sdy > Math.abs(sdx) * 0.8) : Math.hypot(sdx, sdy) > 10) {
                 var d = ITEM_BY_ID[spawnCand.id], it = spawnItem(spawnCand.id, ptr.x, ptr.y, d.kind === 'gun' ? 0 : -0.4);
                 if (it) { startGrabItem(it, d.grip[0], d.grip[1], spawnCand.pid); selectTool(d.id); SFX.spawn(); }
                 suppressClick = true; spawnCand = null;
@@ -2465,7 +2512,7 @@
         var b = e.target.closest('.tool'); if (!b) return;
         suppressClick = false;
         ac();
-        if (e.pointerType !== 'touch') spawnCand = { id: b.getAttribute('data-tool'), sx: e.clientX, sy: e.clientY, pid: e.pointerId };
+        spawnCand = { id: b.getAttribute('data-tool'), sx: e.clientX, sy: e.clientY, pid: e.pointerId, touch: e.pointerType === 'touch' };
     });
     $('toolbar').addEventListener('click', function (e) {
         var b = e.target.closest('.tool'); if (!b) return;
@@ -2500,7 +2547,7 @@
     // on-screen controls for touch screens
     Array.prototype.forEach.call(document.querySelectorAll('#touchCtl button'), function (b) {
         var key = b.getAttribute('data-key');
-        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else keys[key] = true; });
+        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else if (key === 'x') deleteHeld(); else if (key === 'q' || key === 'e') spawnSel(key === 'q'); else keys[key] = true; });
         var up = function () { keys[key] = false; };
         b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
     });
@@ -3179,6 +3226,207 @@
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         $('combatBtn').focus();
     }
+    /* ============ fruit ninja mode ============ */
+    var NJ_KEY = 'marseloNinja';
+    function njLoad() { try { var d = JSON.parse(localStorage.getItem(NJ_KEY)); if (d && d.scores) return d.scores; } catch (e) {} return []; }
+    function njSave() { try { localStorage.setItem(NJ_KEY, JSON.stringify({ scores: NJ.scores })); } catch (e) {} }
+    var NJ = { on: false, state: 'menu', from: 'site', score: 0, lives: 3, objs: [], halves: [], drops: [], stains: [], texts: [], trail: [], queue: [], ptrs: {}, scores: njLoad(), t: 0, nextWave: 0, shake: 0, flash: 0, swipe: { cnt: 0, last: -9, x: 0, y: 0 }, W: 0, H: 0, R: 50, g: 1000, raf: 0, last: 0, boomAt: 0, bx: 0, by: 0, lostAt: -9, newBest: false };
+    var njEl = $('ninja'), njCv = $('ninjaCv'), nj = njCv.getContext('2d');
+    function njResize() {
+        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        NJ.W = window.innerWidth; NJ.H = window.innerHeight; njCv.width = NJ.W * dpr; njCv.height = NJ.H * dpr; nj.setTransform(dpr, 0, 0, dpr, 0, 0);
+        NJ.R = clamp(Math.min(NJ.W, NJ.H) * 0.085, 32, 64); NJ.g = NJ.H * 1.45;
+    }
+    function njText(x, y, txt, col, life, size) { NJ.texts.push({ x: x, y: y, txt: txt, col: col, t: NJ.t, life: life || 1, size: size || 36 }); }
+    function njLaunch(kind) {
+        var R = NJ.R * (0.92 + Math.random() * 0.2), x0 = NJ.W * (0.1 + Math.random() * 0.8), hAp = NJ.H * (0.6 + Math.random() * 0.3) + R;
+        var vy = -Math.sqrt(2 * NJ.g * hAp), tAp = -vy / NJ.g, xa = NJ.W * (0.2 + Math.random() * 0.6);
+        NJ.objs.push({ x: x0, y: NJ.H + R + 6, vx: clamp((xa - x0) / tAp, -NJ.W * 0.5, NJ.W * 0.5), vy: vy, r: R, a: Math.random() * 6.283, w: (Math.random() - 0.5) * 7, kind: kind, skin: Math.floor(Math.random() * SKINS.length), sad: kind === 'bomb' || Math.random() < 0.3 });
+        noise(0.15, 0.1, 500, 'lowpass', 0, 200);
+    }
+    function njWave() {
+        var lvl = 1 + Math.floor(NJ.score / 10), n = 1 + Math.floor(Math.random() * Math.min(5, 1 + lvl * 0.6)), bombs = 0, i;
+        for (i = 0; i < n; i++) {
+            var kind = 'm';
+            if (NJ.score >= 3 && bombs < (lvl > 6 ? 2 : 1) && Math.random() < Math.min(0.24, 0.1 + lvl * 0.012)) { kind = 'bomb'; bombs++; }
+            else if (Math.random() < 0.05) kind = 'gold';
+            NJ.queue.push({ at: NJ.t + i * (0.08 + Math.random() * 0.1), kind: kind });
+        }
+        NJ.nextWave = NJ.t + Math.max(0.65, 2.1 - lvl * 0.09) + Math.random() * 0.7;
+    }
+    function njBoom(o) {
+        NJ.state = 'boom'; NJ.boomAt = NJ.t; NJ.bx = o.x; NJ.by = o.y; NJ.flash = 1; NJ.shake = 1; NJ.lives = 0;
+        for (var i = 0; i < 70; i++) { var a = Math.random() * 6.283, v = 150 + Math.random() * 700; NJ.drops.push({ x: o.x, y: o.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: 3 + Math.random() * 7, t: NJ.t, life: 0.8 + Math.random() * 0.8, col: ['#ffb300', '#ff5722', '#333', '#fff'][i % 4] }); }
+        SFX.boom();
+    }
+    function njSlice(o, ang) {
+        NJ.objs.splice(NJ.objs.indexOf(o), 1);
+        if (o.kind === 'bomb') { njBoom(o); return; }
+        NJ.score += o.kind === 'gold' ? 5 : 1;
+        NJ.swipe.cnt = (NJ.t - NJ.swipe.last < 0.3) ? NJ.swipe.cnt + 1 : 1; NJ.swipe.last = NJ.t; NJ.swipe.x = o.x; NJ.swipe.y = o.y;
+        var nx = -Math.sin(ang), ny = Math.cos(ang), i;
+        [1, -1].forEach(function (sd) {
+            NJ.halves.push({ x: o.x, y: o.y, vx: o.vx * 0.7 + nx * sd * (140 + Math.random() * 100), vy: o.vy * 0.7 + ny * sd * (140 + Math.random() * 100) - 60, a: o.a, w: o.w + sd * (1.5 + Math.random() * 2.5), r: o.r, skin: o.skin, sad: o.sad, kind: o.kind, side: sd, cutA: ang - o.a });
+        });
+        NJ.stains.push({ x: o.x, y: o.y, r: o.r * (1.1 + Math.random() * 0.5), t: NJ.t, rot: Math.random() * 6.283 });
+        for (i = 0; i < 16; i++) { var a = Math.random() * 6.283, v = 120 + Math.random() * 380; NJ.drops.push({ x: o.x, y: o.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, r: 2 + Math.random() * 4, t: NJ.t, life: 0.7 + Math.random() * 0.5, col: Math.random() < 0.5 ? '#ffffff' : '#7db4ff' }); }
+        if (o.kind === 'gold') njText(o.x, o.y - o.r, '+5', '#ffd54f', 1, 44);
+        noise(0.1, 0.28, 2600, 'highpass'); noise(0.07, 0.2, 900, 'bandpass', 0.02);
+        NJ.flash = Math.max(NJ.flash, 0.1);
+    }
+    function njCut(x0, y0, x1, y1) {
+        var dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy; if (len2 < 16) return;
+        var ang = Math.atan2(dy, dx);
+        NJ.objs.slice().forEach(function (o) {
+            if (NJ.state !== 'play') return;
+            var t = clamp(((o.x - x0) * dx + (o.y - y0) * dy) / len2, 0, 1);
+            if (Math.hypot(o.x - (x0 + dx * t), o.y - (y0 + dy * t)) <= o.r * 0.95) njSlice(o, ang);
+        });
+    }
+    function njMenu(title, sub, btn) {
+        var rows = NJ.scores.slice(0, 5).map(function (sc, i) { return '<li' + (NJ.newBest && i === 0 ? ' class="top"' : '') + '>' + sc + '</li>'; }).join('');
+        var m = $('ninjaMenu');
+        m.innerHTML = '<h2>' + title + '</h2><div class="nsub">' + sub + '</div>' + (rows ? '<div class="nhs">high scores</div><ol>' + rows + '</ol>' : '<div class="nhs">no high scores yet</div>') + '<button class="nbtn" id="njPlay">' + btn + '</button><button class="nbtn alt" id="njQuit">exit</button>';
+        m.hidden = false; $('njPlay').focus();
+    }
+    function njOver() {
+        if (NJ.state === 'over') return;
+        NJ.state = 'over'; var sc = NJ.score;
+        NJ.newBest = sc > 0 && (!NJ.scores.length || sc > NJ.scores[0]);
+        if (sc > 0) { NJ.scores.push(sc); NJ.scores.sort(function (a, b) { return b - a; }); NJ.scores = NJ.scores.slice(0, 10); njSave(); }
+        njMenu('GAME OVER', 'score: <b>' + sc + '</b>' + (NJ.newBest ? '<br>NEW HIGH SCORE!' : (NJ.scores.length ? '<br>best: ' + NJ.scores[0] : '')), 'play again');
+    }
+    function njMiss(o) {
+        NJ.lives--; NJ.lostAt = NJ.t; NJ.shake = Math.max(NJ.shake, 0.3);
+        njText(clamp(o.x, 50, NJ.W - 50), NJ.H - 70, 'MISS', '#ff5252', 1, 44); noise(0.25, 0.3, 160, 'lowpass');
+        if (NJ.lives <= 0) njOver();
+    }
+    function njStart() {
+        NJ.score = 0; NJ.lives = 3; NJ.objs = []; NJ.halves = []; NJ.drops = []; NJ.stains = []; NJ.texts = []; NJ.queue = []; NJ.trail = [];
+        NJ.swipe.cnt = 0; NJ.state = 'play'; NJ.newBest = false; NJ.flash = 0; NJ.shake = 0; NJ.nextWave = NJ.t + 0.7; $('ninjaMenu').hidden = true;
+    }
+    function njUpdate(dt) {
+        var i, o;
+        NJ.t += dt; NJ.shake = Math.max(0, NJ.shake - dt * 1.6); NJ.flash = Math.max(0, NJ.flash - dt * (NJ.state === 'boom' ? 1.1 : 1.8));
+        if (NJ.state === 'play') {
+            if (NJ.t >= NJ.nextWave) njWave();
+            for (i = NJ.queue.length - 1; i >= 0; i--) if (NJ.t >= NJ.queue[i].at) { njLaunch(NJ.queue[i].kind); NJ.queue.splice(i, 1); }
+        } else if (NJ.state === 'boom' && NJ.t - NJ.boomAt > 1.4) njOver();
+        for (i = NJ.objs.length - 1; i >= 0; i--) {
+            o = NJ.objs[i]; o.vy += NJ.g * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.w * dt;
+            if (o.y > NJ.H + o.r + 40 && o.vy > 0) { NJ.objs.splice(i, 1); if (o.kind !== 'bomb' && NJ.state === 'play') njMiss(o); }
+        }
+        for (i = NJ.halves.length - 1; i >= 0; i--) { o = NJ.halves[i]; o.vy += NJ.g * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.a += o.w * dt; if (o.y > NJ.H + o.r * 2 + 60) NJ.halves.splice(i, 1); }
+        for (i = NJ.drops.length - 1; i >= 0; i--) { o = NJ.drops[i]; o.vy += NJ.g * 0.8 * dt; o.x += o.vx * dt; o.y += o.vy * dt; if (NJ.t - o.t > o.life) NJ.drops.splice(i, 1); }
+        NJ.texts = NJ.texts.filter(function (t) { return NJ.t - t.t < t.life; });
+        NJ.stains = NJ.stains.filter(function (t) { return NJ.t - t.t < 4; });
+        NJ.trail = NJ.trail.filter(function (t) { return NJ.t - t.t < 0.3; }).slice(-200);
+        if (NJ.swipe.cnt && NJ.t - NJ.swipe.last > 0.3) {
+            if (NJ.swipe.cnt >= 3) { NJ.score += NJ.swipe.cnt; njText(NJ.swipe.x, NJ.swipe.y - 36, NJ.swipe.cnt + ' MARSELO COMBO! +' + NJ.swipe.cnt, '#ffeb3b', 1.4, 34); SFX.spawn(); }
+            NJ.swipe.cnt = 0;
+        }
+    }
+    function njHeart(c, x, y, s) {
+        c.beginPath(); c.moveTo(x, y + s * 0.9); c.bezierCurveTo(x - s * 1.3, y - s * 0.1, x - s * 0.6, y - s * 1.1, x, y - s * 0.35); c.bezierCurveTo(x + s * 0.6, y - s * 1.1, x + s * 1.3, y - s * 0.1, x, y + s * 0.9); c.closePath();
+    }
+    function njHead(c, o, side) {
+        var k = o.r / RC, f = FRAMES[o.sad ? 's_head' : 'h_head'];
+        c.save(); c.translate(o.x, o.y); c.rotate(o.a); c.scale(k, k);
+        if (side) { c.rotate(o.cutA); c.beginPath(); c.rect(-400, side > 0 ? 0 : -400, 800, 400); c.clip(); c.rotate(-o.cutA); }
+        if (atlasReady) c.drawImage(atlas, f.x, f.y, f.w, f.h, f.ox, f.oy, f.w, f.h); else { c.fillStyle = '#ccd'; c.beginPath(); c.arc(0, 0, RC, 0, 7); c.fill(); }
+        if (o.kind === 'bomb') { c.fillStyle = 'rgba(8,8,16,.64)'; c.beginPath(); c.arc(0, 0, RC * 0.99, 0, 7); c.fill(); }
+        if (o.kind === 'gold') { c.fillStyle = 'rgba(255,200,30,.5)'; c.beginPath(); c.arc(0, 0, RC * 0.99, 0, 7); c.fill(); }
+        var sk = SKINS[o.skin]; if (sk && sk.draw) { c.save(); sk.draw(c, NJ.t * 1000); c.restore(); }
+        if (o.kind === 'bomb') {
+            c.strokeStyle = 'rgba(255,60,40,' + (0.45 + 0.4 * Math.sin(NJ.t * 11)) + ')'; c.lineWidth = 9; c.beginPath(); c.arc(0, 0, RC + 5, 0, 7); c.stroke();
+            c.strokeStyle = '#6d4c2a'; c.lineWidth = 8; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, -RC + 6); c.quadraticCurveTo(26, -RC - 34, 8, -RC - 62); c.stroke();
+            c.fillStyle = Math.sin(NJ.t * 30) > 0 ? '#ffeb3b' : '#ff7043'; c.beginPath(); c.arc(8, -RC - 64, 13, 0, 7); c.fill();
+        }
+        if (o.kind === 'gold') { c.strokeStyle = 'rgba(255,235,120,' + (0.5 + 0.4 * Math.sin(NJ.t * 8)) + ')'; c.lineWidth = 9; c.beginPath(); c.arc(0, 0, RC + 5, 0, 7); c.stroke(); }
+        if (side) { c.rotate(o.cutA); c.strokeStyle = '#fff'; c.lineWidth = 6; c.beginPath(); c.moveTo(-RC, 0); c.lineTo(RC, 0); c.stroke(); }
+        c.restore();
+    }
+    function njDraw() {
+        var c = nj, W = NJ.W, H = NJ.H, i, t;
+        c.save();
+        if (NJ.shake > 0) c.translate((Math.random() - 0.5) * 24 * NJ.shake, (Math.random() - 0.5) * 24 * NJ.shake);
+        var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#6b4528'); g.addColorStop(1, '#3d2515'); c.fillStyle = g; c.fillRect(-30, -30, W + 60, H + 60);
+        c.strokeStyle = 'rgba(0,0,0,.22)'; c.lineWidth = 3; var pw = Math.max(90, W / 8); for (i = 0; i * pw < W + pw; i++) { c.beginPath(); c.moveTo(i * pw, -30); c.lineTo(i * pw, H + 30); c.stroke(); }
+        c.strokeStyle = 'rgba(255,220,170,.06)'; c.lineWidth = 2; for (i = 0; i < 40; i++) { var yy = (i * 97) % H; c.beginPath(); c.moveTo(0, yy); c.lineTo(W, yy + 6); c.stroke(); }
+        var rg = c.createRadialGradient(W / 2, H * 0.45, 20, W / 2, H * 0.45, Math.max(W, H) * 0.7); rg.addColorStop(0, 'rgba(255,230,180,.22)'); rg.addColorStop(1, 'rgba(0,0,0,.5)'); c.fillStyle = rg; c.fillRect(-30, -30, W + 60, H + 60);
+        NJ.stains.forEach(function (s2) {
+            var al = 1 - (NJ.t - s2.t) / 4; c.fillStyle = 'rgba(235,245,255,' + 0.55 * al + ')';
+            c.beginPath(); c.arc(s2.x, s2.y, s2.r, 0, 7); c.fill();
+            for (var j = 0; j < 6; j++) { c.beginPath(); c.arc(s2.x + Math.cos(s2.rot + j * 1.05) * s2.r * 1.1, s2.y + Math.sin(s2.rot + j * 1.05) * s2.r * 1.1, s2.r * 0.28, 0, 7); c.fill(); }
+            c.fillStyle = 'rgba(90,140,230,' + 0.45 * al + ')'; c.beginPath(); c.arc(s2.x, s2.y, s2.r * 0.45, 0, 7); c.fill();
+        });
+        NJ.halves.forEach(function (h) { njHead(c, h, h.side); });
+        NJ.objs.forEach(function (o) { njHead(c, o, 0); });
+        NJ.drops.forEach(function (d) { c.globalAlpha = Math.max(0, 1 - (NJ.t - d.t) / d.life); c.fillStyle = d.col; c.beginPath(); c.arc(d.x, d.y, d.r, 0, 7); c.fill(); }); c.globalAlpha = 1;
+        c.lineCap = 'round';
+        for (i = 1; i < NJ.trail.length; i++) {
+            var p1 = NJ.trail[i], q1 = NJ.trail[i - 1]; if (p1.s) continue; var age = NJ.t - p1.t; if (age > 0.22) continue; var a1 = 1 - age / 0.22;
+            c.strokeStyle = 'rgba(190,235,255,' + a1 + ')'; c.lineWidth = 3 + 10 * a1; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(p1.x, p1.y); c.stroke();
+            c.strokeStyle = 'rgba(255,255,255,' + a1 + ')'; c.lineWidth = 1 + 4 * a1; c.stroke();
+        }
+        c.textAlign = 'center'; c.lineJoin = 'round';
+        NJ.texts.forEach(function (tx) {
+            var k = (NJ.t - tx.t) / tx.life; c.globalAlpha = 1 - k * k; c.font = 'bold ' + Math.round(tx.size * (1 + 0.25 * Math.max(0, 1 - k * 6))) + 'px "Comic Sans MS", cursive';
+            c.lineWidth = 7; c.strokeStyle = '#222'; c.strokeText(tx.txt, tx.x, tx.y - k * 40); c.fillStyle = tx.col; c.fillText(tx.txt, tx.x, tx.y - k * 40);
+        }); c.globalAlpha = 1;
+        var fs = Math.round(clamp(Math.min(W, H) * 0.11, 40, 76));
+        c.font = 'bold ' + fs + 'px "Comic Sans MS", cursive'; c.lineWidth = 9; c.strokeStyle = '#222'; c.strokeText(NJ.score, W / 2, fs + 10); c.fillStyle = '#fff'; c.fillText(NJ.score, W / 2, fs + 10);
+        c.font = 'bold ' + Math.round(fs * 0.3) + 'px "Comic Sans MS", cursive'; c.fillStyle = '#ffd740'; c.lineWidth = 5; var best = NJ.scores.length ? Math.max(NJ.scores[0], NJ.score) : NJ.score;
+        c.strokeText('best ' + best, W / 2, fs + 10 + fs * 0.4); c.fillText('best ' + best, W / 2, fs + 10 + fs * 0.4);
+        for (i = 0; i < 3; i++) {
+            var hx = W - 34 - (2 - i) * 42, hy = 38, lost = i >= NJ.lives, sh = (lost && NJ.t - NJ.lostAt < 0.4) ? Math.sin(NJ.t * 60) * 4 : 0;
+            njHeart(c, hx + sh, hy, 15); c.fillStyle = lost ? '#555' : '#ff3d5a'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#222'; c.stroke();
+            if (lost) { c.strokeStyle = '#ff5252'; c.lineWidth = 4; c.beginPath(); c.moveTo(hx - 8, hy - 8); c.lineTo(hx + 8, hy + 8); c.moveTo(hx + 8, hy - 8); c.lineTo(hx - 8, hy + 8); c.stroke(); }
+        }
+        if (NJ.state === 'boom') { var rr = (NJ.t - NJ.boomAt) * 1400, ra = Math.max(0, 1 - (NJ.t - NJ.boomAt) * 1.6); c.strokeStyle = 'rgba(255,200,120,' + ra + ')'; c.lineWidth = 16; c.beginPath(); c.arc(NJ.bx, NJ.by, rr, 0, 7); c.stroke(); }
+        if (NJ.flash > 0) { c.fillStyle = 'rgba(255,255,255,' + Math.min(1, NJ.flash) + ')'; c.fillRect(-30, -30, W + 60, H + 60); }
+        c.restore();
+    }
+    function njLoop(ts) {
+        if (!NJ.on) return;
+        NJ.raf = requestAnimationFrame(njLoop);
+        var dt = Math.min(0.05, (ts - NJ.last) / 1000 || 0.016); NJ.last = ts;
+        njUpdate(dt); njDraw();
+    }
+    function openNinja() {
+        if (NJ.on) return;
+        NJ.from = open ? 'arena' : 'site'; if (open) closeArena();
+        NJ.on = true; njEl.hidden = false; document.body.style.overflow = 'hidden'; window.__combatOpen = true;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        njResize(); window.addEventListener('resize', njResize);
+        NJ.state = 'menu'; NJ.objs = []; NJ.halves = []; NJ.drops = []; NJ.texts = []; NJ.queue = []; NJ.trail = []; NJ.ptrs = {};
+        njMenu('MARSELO NINJA', 'hold the mouse button (or your finger) and swipe to slice the Marselos.<br>3 hearts: every Marselo you let fall costs a heart.<br><b>Do NOT cut the dark bomb Marselo.</b>', 'play');
+        NJ.last = performance.now(); NJ.raf = requestAnimationFrame(njLoop);
+    }
+    function njExit() {
+        if (!NJ.on) return;
+        NJ.on = false; cancelAnimationFrame(NJ.raf); njEl.hidden = true; window.removeEventListener('resize', njResize);
+        document.body.style.overflow = ''; window.__combatOpen = false; NJ.ptrs = {};
+        if (NJ.from === 'arena') openArena(); else $('ninjaBtn').focus();
+    }
+    njCv.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); try { njCv.setPointerCapture(e.pointerId); } catch (_) {} ac();
+        NJ.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; NJ.trail.push({ x: e.clientX, y: e.clientY, t: NJ.t, s: true });
+    });
+    njCv.addEventListener('pointermove', function (e) {
+        var pp = NJ.ptrs[e.pointerId]; if (!pp) return;
+        if (NJ.state === 'play') njCut(pp.x, pp.y, e.clientX, e.clientY);
+        NJ.trail.push({ x: e.clientX, y: e.clientY, t: NJ.t }); pp.x = e.clientX; pp.y = e.clientY;
+    });
+    function njUp(e) { delete NJ.ptrs[e.pointerId]; }
+    njCv.addEventListener('pointerup', njUp); njCv.addEventListener('pointercancel', njUp);
+    $('ninjaMenu').addEventListener('click', function (e) { if (e.target.id === 'njPlay') njStart(); else if (e.target.id === 'njQuit') njExit(); });
+    $('ninjaExit').addEventListener('click', njExit);
+    $('ninjaBtn').addEventListener('click', openNinja);
+    $('ninjaArenaBtn').addEventListener('click', openNinja);
+    document.addEventListener('keydown', function (e) { if (NJ.on && e.key === 'Escape') njExit(); });
+    window.__ninja = { open: openNinja, state: function () { return NJ; } };
+
     buildToolbar();
     buildSkinUI();
     updateHp();
