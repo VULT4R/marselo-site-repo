@@ -65,6 +65,16 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
   picked up, carried and sliced again. It never kills him; you can keep cutting him
   forever.
 
+### Ropes and cables
+
+* **Rope** tool: drag from one spot to another. Start/end on Marselo to tie him, let go in
+  the air to bolt that end to the spot. Ropes swing with physics, you can place many.
+* **Cable** tool: drag from a bolt spot onto a body part or a tool to pin it rigidly in
+  place. Nothing moves a cable.
+* While he is tied or pinned, grab him and keep pulling: the most stretched limb rips off.
+* Tap a rope/cable to remove it, or use "cut all ropes & cables". Tap the tool again to
+  go back to grabbing things.
+
 ### Phone and touchscreen play
 
 * On a phone the on-screen buttons show automatically: ◀ ▶ rotate, **F** use, **+◀ / +▶**

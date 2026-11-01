@@ -3,7 +3,28 @@ MARSELO.SITE - UPDATE LOG
 Newest update on top. Every update gets a new entry here.
 
 
-UPDATE 5  (current)
+UPDATE 6  (current)
+-------------------
+Ropes and cables  (two new tools at the end of the bar: Rope, Cable)
+  * Rope: pick the tool, then drag in the room from one spot to another. If you start or
+    end on Marselo (head or any limb) he is tied to it; if you let go in the air the end is
+    bolted to that spot. Ropes are real physics: they swing, sag, tighten and drag him
+    around. Place as many as you like. Tie one end to the ceiling and he dangles.
+  * Cable: drag from a bolt spot onto a body part (or any tool). The part is pinned rigidly
+    in place and the cable never moves. Drag from one body part to another to lock them
+    together with a rigid link.
+  * Ripping limbs: while Marselo is tied or pinned, grab any part of him and keep pulling
+    away. After a moment the most stretched limb rips off (bleeding like the chainsaw).
+    Untied he just follows you, nothing tears.
+  * Tied Marselo goes limp (no standing) until the ropes are removed. Tap a rope or cable
+    with the tool selected to remove it, or use "cut all ropes & cables" in the left panel.
+    Tap the Rope/Cable tool again to go back to normal grabbing.
+  * Cables can also pin tools in the air; grabbing a pinned tool snaps its cable.
+  * Works with touch too (drag with a finger).
+  * Ropes are cleared when Marselo respawns or the arena is reset.
+
+
+UPDATE 5
 -------------------
 Phone / touchscreen
   * New on-screen buttons next to ◀ ▶ F:  "+◀" spawns the selected tool facing left,

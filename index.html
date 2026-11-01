@@ -404,7 +404,7 @@
         #physPanel #mapChips { display: flex; }
         #touchCtl { flex-wrap: wrap; justify-content: flex-end; max-width: 190px; }
         #arena.touch-on #touchCtl { display: flex; }
-        #touchBtn, #ninjaArenaBtn { width: 100%; margin-top: 6px; border: 2px solid #222; background: #fff; border-radius: 10px; padding: 4px 8px; font-family: inherit; font-size: .85rem; font-weight: bold; cursor: pointer; }
+        #touchBtn, #ninjaArenaBtn, #ropeClearBtn { width: 100%; margin-top: 6px; border: 2px solid #222; background: #fff; border-radius: 10px; padding: 4px 8px; font-family: inherit; font-size: .85rem; font-weight: bold; cursor: pointer; }
         #touchBtn.on { background: #ffd740; }
         @media (max-width: 600px) { #arenaHits { top: 52px; left: auto; right: 10px; transform: none; } }
         /* fruit ninja */
@@ -497,6 +497,7 @@
             <div class="row" style="margin-top:8px"><span>map</span></div>
             <div class="presets" id="mapChips"><button class="chip" type="button" data-map="room">room</button><button class="chip" type="button" data-map="beach">beach</button><button class="chip" type="button" data-map="city">city</button></div>
             <button id="carBtn" type="button">spawn car</button>
+            <button id="ropeClearBtn" type="button">cut all ropes &amp; cables</button>
             <button id="touchBtn" type="button" aria-pressed="false">touchscreen mode: off</button>
             <button id="ninjaArenaBtn" type="button">fruit ninja mode</button>
         </div>
@@ -1182,7 +1183,9 @@
         { id: 'sleepy', label: 'Sleep shot', kind: 'gun', sc: 1.0, mass: 0.5, push: 0.3, ox: 0, oy: 0, a: [-84, 0], b: [84, 0], r: 9, grip: [-20, 0], muzzle: [84, 0], stab: true, syr: 'sleep', tipX: 84, depth: 58, stabV: 90,
           draw: function (c, it) { drawSyr(c, it, '#5aa9ff'); } },
         { id: 'laser', label: 'Laser cutter', kind: 'gun', sc: 0.9, mass: 1.6, push: 0.5, ox: 55, oy: 0, a: [-55, 0], b: [63, 0], r: 15, grip: [-30, 14], muzzle: [64, 0],
-          draw: function (c, it) { drawLaser(c, it && it.firing); } }
+          draw: function (c, it) { drawLaser(c, it && it.firing); } },
+        { id: 'rope', label: 'Rope', mode: 'rope', kind: 'tool', sc: 1, mass: 1, push: 0, ox: 0, oy: 0, a: [-30, 0], b: [30, 0], r: 8, grip: [0, 0], draw: function (c) { drawRopeIcon(c); } },
+        { id: 'cable', label: 'Cable', mode: 'cable', kind: 'tool', sc: 1, mass: 1, push: 0, ox: 0, oy: 0, a: [-30, 0], b: [30, 0], r: 8, grip: [0, 0], draw: function (c) { drawCableIcon(c); } }
     ];
     var ITEM_BY_ID = {};
     ITEMS.forEach(function (d) { ITEM_BY_ID[d.id] = d; });
@@ -1195,7 +1198,7 @@
             b.className = 'tool';
             b.setAttribute('data-tool', d.id);
             b.setAttribute('aria-label', 'Spawn ' + d.label);
-            b.title = 'Select ' + d.label + ' (' + (i + 1) + '), then press E / Q to spawn it';
+            b.title = d.mode ? d.label + ': drag in the room to place it' : 'Select ' + d.label + ' (' + (i + 1) + '), then press E / Q to spawn it';
             var ic = document.createElement('canvas'); ic.width = 108; ic.height = 108;
             var c = ic.getContext('2d'); c.scale(2, 2); c.translate(27, 27);
             var ext = Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]) + 2 * d.r;
@@ -1316,7 +1319,7 @@
     function integrate() {
         var g = GRAV * S * gMul();
         for (var i = 0; i < pts.length; i++) {
-            var p = pts[i]; if (p.frozen) continue; var vx = (p.x - p.px) * 0.9985, vy = (p.y - p.py) * 0.9985;
+            var p = pts[i]; if (p.frozen || p.pin) continue; var dm = p.rope ? 0.993 : 0.9985, vx = (p.x - p.px) * dm, vy = (p.y - p.py) * dm;
             p.px = p.x; p.py = p.y;
             p.x += vx; p.y += vy + g;
         }
@@ -1374,7 +1377,7 @@
             for (var c = 0; c < cons.length; c++) {
                 var cn = cons[c], a = pts[cn[0]], b = pts[cn[1]];
                 var dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.0001;
-                var diff = (d - cn[2]) / d, wa = 1 / a.m, wb = 1 / b.m, ws = wa + wb;
+                var diff = (d - cn[2]) / d, wa = a.pin ? 0 : 1 / a.m, wb = b.pin ? 0 : 1 / b.m, ws = (wa + wb) || 1;
                 a.x += dx * diff * wa / ws; a.y += dy * diff * wa / ws;
                 b.x -= dx * diff * wb / ws; b.y -= dy * diff * wb / ws;
             }
@@ -1387,13 +1390,19 @@
                     b.x -= dx * diff * wb / ws; b.y -= dy * diff * wb / ws;
                 }
             }
+            for (var rr = 0; rr < 2; rr++) for (c = 0; c < rcons.length; c++) {      // ropes get extra passes so they stay taut under Marselo's weight
+                cn = rcons[c]; a = pts[cn[0]]; b = pts[cn[1]];
+                dx = b.x - a.x; dy = b.y - a.y; d = Math.hypot(dx, dy) || 0.0001;
+                diff = (d - cn[2]) / d; wa = a.pin ? 0 : 1 / a.m; wb = b.pin ? 0 : 1 / b.m; ws = (wa + wb) || 1;
+                a.x += dx * diff * wa / ws; a.y += dy * diff * wa / ws; b.x -= dx * diff * wb / ws; b.y -= dy * diff * wb / ws;
+            }
             collide();
         }
     }
     function collide() {
         var e = 0.5, thr = 0.6 * S;
         for (var i = 0; i < pts.length; i++) {
-            var p = pts[i]; if (p.frozen) continue; var r = p.rad, vx = p.x - p.px, vy = p.y - p.py;
+            var p = pts[i]; if (p.frozen || p.pin) continue; var r = p.rad, vx = p.x - p.px, vy = p.y - p.py;
             if (p.y > floorY - r) {
                 if (i === HC && vy > impact) impact = vy;
                 p.y = floorY - r;
@@ -1418,7 +1427,7 @@
 
     /* ============ hit testing & impulses ============ */
     var BONES, cutDone = [], cutList = [], cutP = [], hid = [], headPoly = null;
-    function freshBones() { BONES = [[LS, LE, 13], [LE, LW, 12], [RS, RE, 13], [RE, RW, 12], [LHP, LK, 9], [LK, LF, 9], [RHP, RK, 9], [RK, RF, 9]]; cutDone = []; cutP = []; hid = []; headPoly = null; }
+    function freshBones() { BONES = [[LS, LE, 13], [LE, LW, 12], [RS, RE, 13], [RE, RW, 12], [LHP, LK, 9], [LK, LF, 9], [RHP, RK, 9], [RK, RF, 9]]; cutDone = []; cutP = []; hid = []; headPoly = null; ropes = []; rcons = []; cables = []; tearT = []; }
     function segDist(px, py, a, b) {
         var vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy || 1;
         var t = Math.max(0, Math.min(1, ((px - a.x) * vx + (py - a.y) * vy) / l2));
@@ -1428,7 +1437,7 @@
         if (gone) return 1e9;
         var best = Math.hypot(x - pts[HC].x, y - pts[HC].y) - Rg;
         BONES.forEach(function (b) { best = Math.min(best, segDist(x, y, pts[b[0]], pts[b[1]]) - b[2] * sc); });
-        for (var i = LE; i < pts.length; i++) best = Math.min(best, Math.hypot(x - pts[i].x, y - pts[i].y) - pts[i].rad * 0.8);
+        for (var i = LE; i < pts.length; i++) if (!pts[i].rope) best = Math.min(best, Math.hypot(x - pts[i].x, y - pts[i].y) - pts[i].rad * 0.8);
         return best;
     }
     var CIRC = [HC, LE, LW, RE, RW, LK, LF, RK, RF];
@@ -1718,7 +1727,7 @@
     }
     function grabBody() {
         if (!grab || grab.kind !== 'body') return;
-        var p = pts[grab.i];
+        var p = pts[grab.i]; if (p.pin) return;
         var tx = clamp(ptr.x + grab.ox, p.rad, W - p.rad), ty = clamp(ptr.y + grab.oy, p.rad, floorY - p.rad);
         var kb = comp(0.3);
         p.x += (tx - p.x) * kb; p.y += (ty - p.y) * kb;
@@ -2169,6 +2178,7 @@
         var f60 = gdt / 1000 * 60, i, p;
         tickMore(gdt);
         tickCars(gdt);
+        ropesTick(gdt);
         if (dyT >= 0 && gt - dyT > 1000) colgateBurst();
         if (dead && performance.now() - deadRt > 3000) revive();
         bleeds.forEach(function (B) {
@@ -2375,7 +2385,7 @@
     }
     function meltLine() {
         var h = pts[HC], m = Math.min(1, (gt - melt.t0) / melt.dur), top = h.y - Rg - 240 * sc, bot = h.y;
-        pts.forEach(function (q) { if (!q.frozen) bot = Math.max(bot, q.y + (q.rad || 0)); });
+        pts.forEach(function (q) { if (!q.frozen && !q.rope) bot = Math.max(bot, q.y + (q.rad || 0)); });
         return top + (bot + 12 - top) * m;
     }
     function drawMeltBones() {
@@ -2458,11 +2468,13 @@
     window.addEventListener('pointerdown', function (e) { lastPtrType = e.pointerType || 'mouse'; }, true);
     applyTouch();
     function selectTool(id) {
+        if (ITEM_BY_ID[id].mode && sel === id) { sel = null; ropeDrag = null; Array.prototype.forEach.call(document.querySelectorAll('.tool'), function (b) { b.classList.remove('sel'); }); setHint(); return; }
         sel = id;
         Array.prototype.forEach.call(document.querySelectorAll('.tool'), function (b) { b.classList.toggle('sel', b.getAttribute('data-tool') === id); });
-        $('arenaHint').innerHTML = '<b>' + ITEM_BY_ID[id].label + '</b> selected &middot; ' + (touchOn() ? 'tap <b>+&#9654;</b> to spawn it facing right, <b>+&#9664;</b> to face left, or drag it up from the bar' : 'press <b>E</b> to spawn it facing right, <b>Q</b> to face left');
+        $('arenaHint').innerHTML = ITEM_BY_ID[id].mode ? MODE_HINT[id] : '<b>' + ITEM_BY_ID[id].label + '</b> selected &middot; ' + (touchOn() ? 'tap <b>+&#9654;</b> to spawn it facing right, <b>+&#9664;</b> to face left, or drag it up from the bar' : 'press <b>E</b> to spawn it facing right, <b>Q</b> to face left');
     }
     function spawnSel(left) {
+        if (sel && ITEM_BY_ID[sel].mode) return;
         if (!sel) { $('arenaHint').innerHTML = touchOn() ? 'tap a tool in the bar first, then tap <b>+&#9664;</b> or <b>+&#9654;</b>' : 'pick a tool in the bar first, then press <b>E</b> or <b>Q</b>'; return; }
         var tch = touchOn(), x = (!tch && ptrIn) ? ptr.x : W / 2 + (left ? 1 : -1) * W * 0.1, y = (!tch && ptrIn) ? ptr.y : H * 0.3;
         var it = spawnItem(sel, clamp(x, 40, W - 40), Math.min(y, floorY - 40), left ? Math.PI : 0);
@@ -2477,11 +2489,13 @@
         ac();
         var p = pos(e); ptr.x = p.x; ptr.y = p.y; ptrIn = true;
         if (grab) return;
+        if (modeTool()) { ropeDrag = { pid: e.pointerId, sx: p.x, sy: p.y, ex: p.x, ey: p.y, a: pickAnchor(p.x, p.y), hit: lineAt(p.x, p.y) }; return; }
         var h = pickAt(p.x, p.y);
         if (h) beginGrab(h, p, e.pointerId);
     });
     window.addEventListener('pointermove', function (e) {
         if (!open) return;
+        if (ropeDrag && e.pointerId === ropeDrag.pid) { var rp = pos(e); ropeDrag.ex = rp.x; ropeDrag.ey = rp.y; ptr.x = rp.x; ptr.y = rp.y; return; }
         if (spawnCand && e.pointerId === spawnCand.pid) {
             var p0 = pos(e); ptr.x = p0.x; ptr.y = p0.y;
             var sdx = e.clientX - spawnCand.sx, sdy = e.clientY - spawnCand.sy;
@@ -2497,6 +2511,7 @@
         if (!grab && e.target === cv) updateCursor();
     });
     function endPtr(e) {
+        if (ropeDrag && e.pointerId === ropeDrag.pid) { ropeFinish(e.type === 'pointercancel'); return; }
         if (spawnCand && e.pointerId === spawnCand.pid) spawnCand = null;
         if (grab && e.pointerId === grab.pid) releaseGrab();
     }
@@ -2512,7 +2527,7 @@
         var b = e.target.closest('.tool'); if (!b) return;
         suppressClick = false;
         ac();
-        spawnCand = { id: b.getAttribute('data-tool'), sx: e.clientX, sy: e.clientY, pid: e.pointerId, touch: e.pointerType === 'touch' };
+        if (!ITEM_BY_ID[b.getAttribute('data-tool')].mode) spawnCand = { id: b.getAttribute('data-tool'), sx: e.clientX, sy: e.clientY, pid: e.pointerId, touch: e.pointerType === 'touch' };
     });
     $('toolbar').addEventListener('click', function (e) {
         var b = e.target.closest('.tool'); if (!b) return;
@@ -2679,7 +2694,7 @@
     function tickCars(gdt) {
         var dt = gdt / 1000, h = pts[HC];
         if (mapId === 'city' && !gone && gt > nextCar) { spawnCar(); nextCar = gt + 22000 + Math.random() * 16000; }
-        var low = h.y; pts.forEach(function (q) { if (!q.frozen) low = Math.max(low, q.y + (q.rad || 0)); });
+        var low = h.y; pts.forEach(function (q) { if (!q.frozen && !q.rope) low = Math.max(low, q.y + (q.rad || 0)); });
         cars.forEach(function (car) {
             car.x -= car.v * dt; car.rot -= car.v * dt / (car.h * 0.26);
             if (!gone && !flat && dyT < 0 && !melt && low > floorY - car.h * 1.3 && car.x - car.w / 2 < h.x + Rg * 0.6 && car.x + car.w / 2 > h.x - Rg * 0.6) crushMarselo();
@@ -3032,7 +3047,9 @@
             integrate(); standControl(); grabBody(); solve();
             for (var i = 0; i < items.length; i++) {
                 var it = items[i];
-                if (it.held) stepHeld(it); else { stepFree(it); if (it.stuck) solveStuck(it); }
+                if (it.cable && it.held) { cables = cables.filter(function (l) { return l.it !== it; }); it.cable = null; }
+                if (it.cable) { it.x = it.cable.x; it.y = it.cable.y; it.vx = it.vy = it.w = 0; }
+                else if (it.held) stepHeld(it); else { stepFree(it); if (it.stuck) solveStuck(it); }
                 itemVsMarselo(it);
             }
             acc -= STEP;
@@ -3124,13 +3141,13 @@
             var ext = Math.hypot(it.d.b[0] - it.d.a[0], it.d.b[1] - it.d.a[1]) / 2 * ik(it) + it.d.r * ik(it);
             shadowAt(it.x, low, Math.max(14 * S, ext * 0.8), 0.22);
         });
-        drawPools(); drawPieces();
+        drawPools(); drawPieces(); drawRopes(false);
         items.forEach(function (it) { if (it.stuck) drawItem(it); });
-        drawMarselo(); drawSpots(); drawCars();
+        drawMarselo(); drawSpots(); drawRopes(true); drawCars();
         items.forEach(function (it) { if (!it.stuck) drawItem(it); });
         items.forEach(function (it) { if (it.stuck && !gone) { var E = anchorW(it.stuck); ctx.fillStyle = '#b3121c'; ctx.beginPath(); ctx.arc(E.x, E.y, 4 * S, 0, 7); ctx.fill(); } });
         if (grab && grab.kind === 'item') drawHeldMarks(grab.it);
-        drawBeam();
+        drawBeam(); drawRopePreview();
         tracers.forEach(function (t) {
             ctx.strokeStyle = 'rgba(255,240,150,' + (1 - (now - t.t0) / 70) + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(t.x0, t.y0); ctx.lineTo(t.x1, t.y1); ctx.stroke();
         });
@@ -3226,6 +3243,153 @@
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         $('combatBtn').focus();
     }
+    /* ============ ropes and cables ============ */
+    var ropes = [], rcons = [], cables = [], tearT = [], ropeDrag = null;
+    var MODE_HINT = {
+        rope: '<b>ROPE</b> &middot; drag from one spot to another. Start or end on Marselo to tie him, let go in the air to hang it there &middot; tap a rope to cut it &middot; tap the tool again to go back to grabbing',
+        cable: '<b>CABLE</b> &middot; drag from a bolt spot onto a body part (or a tool) to pin it rigidly in place &middot; tap a cable to remove it &middot; tap the tool again to go back to grabbing'
+    };
+    function drawRopeIcon(c) {
+        c.lineCap = 'round'; c.lineJoin = 'round';
+        c.beginPath(); c.moveTo(-26, 14); c.bezierCurveTo(-26, -16, -6, 24, 8, 2); c.bezierCurveTo(16, -12, 26, -10, 26, -18);
+        c.strokeStyle = '#3b2a14'; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#c9a15c'; c.lineWidth = 6; c.stroke();
+        c.setLineDash([3, 5]); c.strokeStyle = '#8a6a35'; c.stroke(); c.setLineDash([]);
+        c.fillStyle = '#b8863f'; c.strokeStyle = '#3b2a14'; c.lineWidth = 2.5; c.beginPath(); c.arc(-26, 14, 6, 0, 7); c.fill(); c.stroke();
+    }
+    function drawCableIcon(c) {
+        c.lineCap = 'round';
+        c.beginPath(); c.moveTo(-24, 18); c.lineTo(22, -16); c.strokeStyle = '#1d2024'; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#8a9099'; c.lineWidth = 5.5; c.stroke(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.8; c.stroke();
+        [[-24, 18], [22, -16]].forEach(function (q) { c.fillStyle = '#9aa0a6'; c.strokeStyle = '#222'; c.lineWidth = 2.5; c.beginPath(); c.arc(q[0], q[1], 8, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(q[0] - 5, q[1]); c.lineTo(q[0] + 5, q[1]); c.stroke(); });
+    }
+    function modeTool() { return sel && ITEM_BY_ID[sel] && ITEM_BY_ID[sel].mode; }
+    function pickAnchor(x, y) {                       // what sits under this spot: a Marselo point, an item, or nothing (the world)
+        var best = -1, bd = 1e9;
+        if (!gone && !flat) CIRC.forEach(function (ci) { var q = pts[ci]; if (q.frozen) return; var dd = Math.hypot(x - q.x, y - q.y) - Math.max(circR(ci), 22 * S); if (dd < bd) { bd = dd; best = ci; } });
+        if (best >= 0 && bd < 0) return { pi: best };
+        var it = itemAt(x, y); return it ? { it: it } : null;
+    }
+    function cableEnds(l) {
+        if (l.k === 'pin') { if (l.it) return { ax: l.ax, ay: l.ay, x: l.it.x, y: l.it.y }; var q = pts[l.pi]; return q.frozen ? null : { ax: l.ax, ay: l.ay, x: q.x, y: q.y }; }
+        var a = pts[l.a], b = pts[l.b]; return (a.frozen || b.frozen) ? null : { ax: a.x, ay: a.y, x: b.x, y: b.y };
+    }
+    function lineAt(x, y) {
+        var i, j, tol = 10 * S;
+        for (i = ropes.length - 1; i >= 0; i--) for (j = 1; j < ropes[i].n.length; j++) { var A = pts[ropes[i].n[j - 1]], B = pts[ropes[i].n[j]]; if (!A.frozen && !B.frozen && segDist(x, y, A, B) < tol) return ropes[i]; }
+        for (i = cables.length - 1; i >= 0; i--) { var e = cableEnds(cables[i]); if (e && segDist(x, y, { x: e.ax, y: e.ay }, { x: e.x, y: e.y }) < tol) return cables[i]; }
+        return null;
+    }
+    function makeRope(x0, y0, a, x1, y1, b) {
+        var pa = a && a.pi != null ? a.pi : null, pb = b && b.pi != null ? b.pi : null, i;
+        if (pa !== null && pa === pb) return;
+        if (pa !== null) { x0 = pts[pa].x; y0 = pts[pa].y; }
+        if (pb !== null) { x1 = pts[pb].x; y1 = pts[pb].y; }
+        var dl = Math.hypot(x1 - x0, y1 - y0); if (dl < 24) return;
+        var N = clamp(Math.round(dl / (22 * S)), 3, 40), seg = dl * 1.1 / N, nodes = [], own = [];
+        for (i = 0; i <= N; i++) {
+            var t = i / N, idx;
+            if (i === 0 && pa !== null) idx = pa; else if (i === N && pb !== null) idx = pb;
+            else {
+                var q = { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, rad: 2 * S, m: 1.5, rx: 0, ry: 0, cut: true, rope: true };
+                q.px = q.x; q.py = q.y; if (i === 0 || i === N) { q.pin = true; q.m = 50; }
+                pts.push(q); idx = pts.length - 1; own.push(idx);
+            }
+            nodes.push(idx);
+        }
+        for (i = 0; i < N; i++) rcons.push([nodes[i], nodes[i + 1], seg]);
+        ropes.push({ k: 'rope', n: nodes, own: own, ends: [pa, pb] }); SFX.spawn();
+    }
+    function makeCable(x0, y0, a, x1, y1, b) {
+        var ta = a && (a.pi != null || a.it) ? a : null, tb = b && (b.pi != null || b.it) ? b : null;
+        if (!ta && !tb) { $('arenaHint').innerHTML = 'a cable needs a body part or a tool at one end (the other end is the bolt in the wall/floor)'; return; }
+        if (ta && tb && ta.pi != null && tb.pi != null && ta.pi !== tb.pi) {            // both ends on Marselo: rigid link
+            cons.push([ta.pi, tb.pi, Math.hypot(pts[ta.pi].x - pts[tb.pi].x, pts[ta.pi].y - pts[tb.pi].y)]); cables.push({ k: 'link', a: ta.pi, b: tb.pi }); SFX.spawn(); return;
+        }
+        var tg = ta || tb, ax = ta ? x1 : x0, ay = ta ? y1 : y0;
+        if (tg.pi != null) { var q = pts[tg.pi]; q.pin = true; q.px = q.x; q.py = q.y; cables.push({ k: 'pin', pi: tg.pi, ax: ax, ay: ay }); }
+        else { tg.it.cable = { x: tg.it.x, y: tg.it.y }; tg.it.vx = tg.it.vy = tg.it.w = 0; cables.push({ k: 'pin', it: tg.it, ax: ax, ay: ay }); }
+        SFX.spawn(); noise(0.08, 0.2, 1800, 'highpass');
+    }
+    function removeLine(l) {
+        if (l.k === 'rope') { l.own.forEach(function (i) { pts[i].pin = false; freezePt(pts[i]); }); ropes.splice(ropes.indexOf(l), 1); rcons = rcons.filter(function (c) { return !pts[c[0]].frozen && !pts[c[1]].frozen; }); }
+        else {
+            cables.splice(cables.indexOf(l), 1);
+            if (l.k === 'pin') { if (l.it) l.it.cable = null; else if (!cables.some(function (o) { return o.k === 'pin' && o.pi === l.pi; })) pts[l.pi].pin = false; }
+            else cons = cons.filter(function (c) { return !(c[0] === l.a && c[1] === l.b); });
+        }
+        noise(0.1, 0.2, 2200, 'bandpass');
+    }
+    function clearLines() { ropes.slice().forEach(removeLine); cables.slice().forEach(removeLine); }
+    $('ropeClearBtn').addEventListener('click', function () { clearLines(); this.blur(); });
+    function ropeFinish(cancel) {
+        var d = ropeDrag; ropeDrag = null; if (!d || cancel) return;
+        var len = Math.hypot(d.ex - d.sx, d.ey - d.sy);
+        if (len < 14) { if (d.hit) removeLine(d.hit); return; }
+        var b = pickAnchor(d.ex, d.ey);
+        if (sel === 'rope') makeRope(d.sx, d.sy, d.a, d.ex, d.ey, b); else makeCable(d.sx, d.sy, d.a, d.ex, d.ey, b);
+    }
+    function tied() {
+        var i; if (gone) return false;
+        for (i = 0; i < cables.length; i++) if (cables[i].k === 'link' || cables[i].pi != null) return true;
+        for (i = 0; i < ropes.length; i++) if (ropes[i].ends.some(function (e) { return e !== null && !pts[e].frozen; })) return true;
+        return false;
+    }
+    var tearLag = 0;
+    function tearCheck(gdt) {                         // tied up + you keep pulling harder than the body can follow = the most stretched limb rips off
+        if (!grab || grab.kind !== 'body' || grab.cutPt) { tearLag = 0; return; }
+        var q = pts[grab.i], lag = Math.hypot(ptr.x + grab.ox - q.x, ptr.y + grab.oy - q.y);
+        if (lag < Rg * 0.9) { tearLag = Math.max(0, tearLag - gdt); return; }
+        tearLag += gdt; if (tearLag < 300) return;
+        var best = -1, br = 1.12, bi;
+        for (bi = 0; bi < 8; bi++) {
+            if (cutDone[bi] || hid[bi]) continue;
+            var bn = BONES[bi], A = pts[bn[0]], B = pts[bn[1]], L = 0;
+            cons.forEach(function (c) { if (c[0] === bn[0] && c[1] === bn[1]) L = c[2]; });
+            if (L && Math.hypot(B.x - A.x, B.y - A.y) / L > br) { br = Math.hypot(B.x - A.x, B.y - A.y) / L; best = bi; }
+        }
+        if (best >= 0) { tearLag = 0; if (grab.i === BONES[best][1]) grab.cutPt = true; sever(best); }
+    }
+    function ropesTick(gdt) {
+        rcons = rcons.filter(function (c) { return !pts[c[0]].frozen && !pts[c[1]].frozen; });
+        cables = cables.filter(function (l) { return l.k === 'pin' ? (l.it ? (items.indexOf(l.it) >= 0 && l.it.cable) : !pts[l.pi].frozen) : (!pts[l.a].frozen && !pts[l.b].frozen); });
+        if (tied()) { stand = 0; tearCheck(gdt); }
+    }
+    function bolt(c, x, y, col) {
+        c.fillStyle = col || '#9aa0a6'; c.strokeStyle = '#222'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 7 * S, 0, 7); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(x - 4 * S, y); c.lineTo(x + 4 * S, y); c.stroke();
+    }
+    function drawRopes(top) {
+        var c = ctx;
+        if (!top) {
+            ropes.forEach(function (r) {
+                c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); var pen = false;
+                r.n.forEach(function (i) { var q = pts[i]; if (q.frozen) { pen = false; return; } if (pen) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); pen = true; });
+                c.strokeStyle = '#3b2a14'; c.lineWidth = 7 * S; c.stroke(); c.strokeStyle = '#c9a15c'; c.lineWidth = 4.6 * S; c.stroke();
+                c.setLineDash([3 * S, 5 * S]); c.strokeStyle = '#8a6a35'; c.stroke(); c.restore();
+            });
+            cables.forEach(function (l) {
+                var e = cableEnds(l); if (!e) return;
+                c.save(); c.lineCap = 'round'; c.beginPath(); c.moveTo(e.ax, e.ay); c.lineTo(e.x, e.y);
+                c.strokeStyle = '#1d2024'; c.lineWidth = 7 * S; c.stroke(); c.strokeStyle = '#8a9099'; c.lineWidth = 4 * S; c.stroke(); c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.3 * S; c.stroke(); c.restore();
+            });
+            return;
+        }
+        ropes.forEach(function (r) {
+            [0, r.n.length - 1].forEach(function (k, j) {
+                var q = pts[r.n[k]]; if (q.frozen) return;
+                if (r.ends[j] === null) bolt(c, q.x, q.y, '#b8863f');
+                else { c.fillStyle = '#b8863f'; c.strokeStyle = '#3b2a14'; c.lineWidth = 2.5; c.beginPath(); c.arc(q.x, q.y, 6 * S, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(q.x - 3 * S, q.y - 3 * S); c.lineTo(q.x + 3 * S, q.y + 3 * S); c.moveTo(q.x + 3 * S, q.y - 3 * S); c.lineTo(q.x - 3 * S, q.y + 3 * S); c.stroke(); }
+            });
+        });
+        cables.forEach(function (l) { var e = cableEnds(l); if (!e) return; if (l.k === 'pin') bolt(c, e.ax, e.ay); else bolt(c, e.ax, e.ay, '#7b8088'); bolt(c, e.x, e.y, '#7b8088'); });
+    }
+    function drawRopePreview() {
+        if (!ropeDrag) return;
+        var c = ctx, d = ropeDrag, b = pickAnchor(d.ex, d.ey), col = sel === 'rope' ? '#ffd740' : '#cfd8dc';
+        c.save(); c.setLineDash([8, 6]); c.lineWidth = 3; c.strokeStyle = col; c.beginPath(); c.moveTo(d.sx, d.sy); c.lineTo(d.ex, d.ey); c.stroke(); c.setLineDash([]);
+        [[d.sx, d.sy, d.a], [d.ex, d.ey, b]].forEach(function (q) { c.strokeStyle = q[2] ? '#69f0ae' : col; c.lineWidth = 4; c.beginPath(); c.arc(q[0], q[1], 12 * S, 0, 7); c.stroke(); });
+        c.restore();
+    }
+
     /* ============ fruit ninja mode ============ */
     var NJ_KEY = 'marseloNinja';
     function njLoad() { try { var d = JSON.parse(localStorage.getItem(NJ_KEY)); if (d && d.scores) return d.scores; } catch (e) {} return []; }
@@ -3434,7 +3598,7 @@
     setHint();
     window.__combat = {
         open: openArena, close: closeArena,
-        _dbg: function () { return { cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
+        _dbg: function () { return { tearT: tearT, cons: cons, ropes: ropes, cables: cables, rcons: rcons, cutDone: cutDone, cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
         hit: function (x, y) { poke(x, y); },
         _spawn: function (id, x, y, a) { return spawnItem(id, x, y, a); }
     };
