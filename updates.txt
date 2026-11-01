@@ -3,7 +3,24 @@ MARSELO.SITE - UPDATE LOG
 Newest update on top. Every update gets a new entry here.
 
 
-UPDATE 6  (current)
+UPDATE 7  (current)
+-------------------
+Clear everything
+  * New "clear everything" button in the left panel, and a broom button in the on-screen
+    controls on phones. It removes every tool you spawned, every loose piece and bone,
+    cars, ropes and cables, plus blood / paste / acid / fire leftovers. Marselo stays.
+
+Menus you can open and close  (much more room on phones)
+  * The left panel (settings), the bottom tool bar and the right on-screen buttons are now
+    three menus with their own tab: they slide in from the left, bottom and right.
+    Tabs: gear / arrow on the left edge, "tools" tab above the bar, arrow / pad on the right.
+  * Closing the tool bar also moves the hint text down so it is not in the way.
+  * Phones start with the left panel closed (the bar and buttons open); computers start
+    with everything open. Your choices are remembered.
+  * On-screen buttons now wrap four to a row, so they take less height.
+
+
+UPDATE 6
 -------------------
 Ropes and cables  (two new tools at the end of the bar: Rope, Cable)
   * Rope: pick the tool, then drag in the room from one spot to another. If you start or

@@ -65,6 +65,13 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
   picked up, carried and sliced again. It never kills him; you can keep cutting him
   forever.
 
+### Menus and clearing
+
+* The left panel, the bottom tool bar and the right on-screen buttons each open and close
+  with their own tab (they slide in from the left, bottom and right). Handy on phones.
+* **clear everything** (left panel, or the broom button) removes every spawned tool, loose
+  piece, car, rope and cable. Marselo himself stays.
+
 ### Ropes and cables
 
 * **Rope** tool: drag from one spot to another. Start/end on Marselo to tie him, let go in

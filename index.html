@@ -402,11 +402,28 @@
         #toolbar { touch-action: pan-x; }
         .tool { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
         #physPanel #mapChips { display: flex; }
-        #touchCtl { flex-wrap: wrap; justify-content: flex-end; max-width: 190px; }
+        #touchCtl { flex-wrap: wrap; justify-content: flex-end; max-width: 250px; }
         #arena.touch-on #touchCtl { display: flex; }
-        #touchBtn, #ninjaArenaBtn, #ropeClearBtn { width: 100%; margin-top: 6px; border: 2px solid #222; background: #fff; border-radius: 10px; padding: 4px 8px; font-family: inherit; font-size: .85rem; font-weight: bold; cursor: pointer; }
+        #touchBtn, #ninjaArenaBtn, #ropeClearBtn, #clearAllBtn { width: 100%; margin-top: 6px; border: 2px solid #222; background: #fff; border-radius: 10px; padding: 4px 8px; font-family: inherit; font-size: .85rem; font-weight: bold; cursor: pointer; }
         #touchBtn.on { background: #ffd740; }
         @media (max-width: 600px) { #arenaHits { top: 52px; left: auto; right: 10px; transform: none; } }
+        /* dock menus: left panel, bottom tools, right controls */
+        #physPanel, #touchCtl, #toolDock { transition: transform .25s ease; }
+        #arenaHint { transition: bottom .25s ease; }
+        #toolDock { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); max-width: calc(100vw - 16px); display: flex; flex-direction: column; align-items: center; z-index: 2; }
+        #toolDock #toolbar { position: relative; left: auto; bottom: auto; transform: none; max-width: 100%; }
+        .dock-tab { position: absolute; z-index: 4; border: 3px solid #222; background: #ffd740; color: #222; font-family: inherit; font-weight: bold; font-size: 1.05rem; line-height: 1; cursor: pointer; box-shadow: 3px 3px 0 #222; padding: 0; }
+        #physPanel #tabLeft { right: -37px; top: 8px; width: 34px; height: 56px; border-left: 0; border-radius: 0 12px 12px 0; }
+        #touchCtl #tabRight { left: -34px; top: 8px; width: 34px; height: 56px; border-right: 0; border-radius: 12px 0 0 12px; }
+        #toolDock #tabBottom { position: relative; margin-bottom: -3px; padding: 5px 18px 6px; border-bottom: 0; border-radius: 12px 12px 0 0; box-shadow: none; }
+        #arena.closed-left #physPanel { transform: translateX(calc(-100% - 12px)); }
+        #arena.closed-left #physPanel > :not(.dock-tab) { visibility: hidden; transition: visibility 0s .25s; }
+        #arena.closed-right #touchCtl { transform: translateX(calc(100% + 10px)); }
+        #arena.closed-right #touchCtl > :not(.dock-tab) { visibility: hidden; transition: visibility 0s .25s; }
+        #arena.closed-bottom #toolDock { transform: translate(-50%, calc(100% - 34px)); }
+        #arena.closed-bottom #toolDock #toolbar { visibility: hidden; transition: visibility 0s .25s; }
+        #arena.closed-bottom #arenaHint { bottom: 52px; }
+        @media (prefers-reduced-motion: reduce) { #physPanel, #touchCtl, #toolDock, #arenaHint { transition: none; } }
         /* fruit ninja */
         #ninjaBtn { position: fixed; top: 58px; left: 12px; z-index: 1100; border: 3px solid #222; background: #ffd740; color: #222; border-radius: 999px; padding: 8px 16px; font-family: 'Comic Sans MS', 'Comic Sans', cursive; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 3px 3px 0 #222; }
         #ninjaBtn:hover { background: #ffee58; }
@@ -483,6 +500,7 @@
         <button class="arena-btn" id="arenaSound" aria-pressed="true">sound on</button>
         <button class="arena-btn" id="arenaReset">reset</button>
         <div id="physPanel">
+            <button id="tabLeft" class="dock-tab" type="button"></button>
             <div class="row"><label for="gravSlider">gravity</label><span><b id="gravVal">45%</b> <span id="gravName">floaty</span></span></div>
             <input id="gravSlider" type="range" min="-50" max="300" step="5" value="45" aria-label="Gravity strength in percent">
             <div class="presets">
@@ -498,20 +516,26 @@
             <div class="presets" id="mapChips"><button class="chip" type="button" data-map="room">room</button><button class="chip" type="button" data-map="beach">beach</button><button class="chip" type="button" data-map="city">city</button></div>
             <button id="carBtn" type="button">spawn car</button>
             <button id="ropeClearBtn" type="button">cut all ropes &amp; cables</button>
+            <button id="clearAllBtn" type="button">clear everything</button>
             <button id="touchBtn" type="button" aria-pressed="false">touchscreen mode: off</button>
             <button id="ninjaArenaBtn" type="button">fruit ninja mode</button>
         </div>
         <div id="slowBadge" hidden>SLOW-MO 25%</div>
         <div id="arenaHint"></div>
         <div id="touchCtl" aria-label="Held item controls">
+            <button id="tabRight" class="dock-tab" type="button"></button>
             <button type="button" data-key="a" aria-label="Rotate left">&#9664;</button>
             <button type="button" data-key="d" aria-label="Rotate right">&#9654;</button>
             <button type="button" data-key="f" aria-label="Use held item">F</button>
             <button type="button" data-key="q" aria-label="Spawn selected tool facing left">+&#9664;</button>
             <button type="button" data-key="e" aria-label="Spawn selected tool facing right">+&#9654;</button>
             <button type="button" data-key="x" aria-label="Delete held item">&#128465;</button>
+            <button type="button" data-key="c" aria-label="Clear everything">&#129529;</button>
         </div>
-        <div id="toolbar" role="toolbar" aria-label="Spawn weapons"></div>
+        <div id="toolDock">
+            <button id="tabBottom" class="dock-tab" type="button"></button>
+            <div id="toolbar" role="toolbar" aria-label="Spawn weapons"></div>
+        </div>
     </div>
 
     <!-- Fruit Ninja mode -->
@@ -2562,7 +2586,7 @@
     // on-screen controls for touch screens
     Array.prototype.forEach.call(document.querySelectorAll('#touchCtl button'), function (b) {
         var key = b.getAttribute('data-key');
-        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else if (key === 'x') deleteHeld(); else if (key === 'q' || key === 'e') spawnSel(key === 'q'); else keys[key] = true; });
+        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else if (key === 'x') deleteHeld(); else if (key === 'q' || key === 'e') spawnSel(key === 'q'); else if (key === 'c') clearEverything(); else keys[key] = true; });
         var up = function () { keys[key] = false; };
         b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
     });
@@ -3390,6 +3414,27 @@
         c.restore();
     }
 
+    /* ============ dock menus + clear everything ============ */
+    var dockSmall = window.innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    var dock = dockSmall ? { l: false, b: true, r: true } : { l: true, b: true, r: true };
+    try { var dsaved = JSON.parse(localStorage.getItem('marseloDock')); if (dsaved && typeof dsaved.l === 'boolean') dock = dsaved; } catch (e) {}
+    function applyDock() {
+        arena.classList.toggle('closed-left', !dock.l); arena.classList.toggle('closed-bottom', !dock.b); arena.classList.toggle('closed-right', !dock.r);
+        function lab(id, open, o, c, name) { var b = $(id); b.textContent = open ? o : c; b.title = (open ? 'Close ' : 'Open ') + name; b.setAttribute('aria-label', b.title); b.setAttribute('aria-expanded', String(open)); }
+        lab('tabLeft', dock.l, '\u25C0', '\u2699', 'menu'); lab('tabRight', dock.r, '\u25B6', '\uD83C\uDFAE', 'controls'); lab('tabBottom', dock.b, '\u25BC tools', '\u25B2 tools', 'tools');
+    }
+    [['tabLeft', 'l'], ['tabRight', 'r'], ['tabBottom', 'b']].forEach(function (d) {
+        $(d[0]).addEventListener('click', function () { dock[d[1]] = !dock[d[1]]; try { localStorage.setItem('marseloDock', JSON.stringify(dock)); } catch (e) {} applyDock(); this.blur(); });
+    });
+    applyDock();
+    function clearEverything() {
+        if (grab && grab.kind !== 'body') releaseGrab();
+        clearLines(); sawSound(false);
+        items = []; pieces = []; cars = []; parts = []; goo = []; decals = []; pools = []; spots = []; beam = null;
+        addText(W / 2, H * 0.3, 'CLEARED!', '#fff', 40); noise(0.25, 0.3, 700, 'lowpass', 0, 120);
+    }
+    $('clearAllBtn').addEventListener('click', function () { clearEverything(); this.blur(); });
+
     /* ============ fruit ninja mode ============ */
     var NJ_KEY = 'marseloNinja';
     function njLoad() { try { var d = JSON.parse(localStorage.getItem(NJ_KEY)); if (d && d.scores) return d.scores; } catch (e) {} return []; }
@@ -3598,7 +3643,7 @@
     setHint();
     window.__combat = {
         open: openArena, close: closeArena,
-        _dbg: function () { return { tearT: tearT, cons: cons, ropes: ropes, cables: cables, rcons: rcons, cutDone: cutDone, cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
+        _dbg: function () { return { dock: dock, tearT: tearT, cons: cons, ropes: ropes, cables: cables, rcons: rcons, cutDone: cutDone, cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
         hit: function (x, y) { poke(x, y); },
         _spawn: function (id, x, y, a) { return spawnItem(id, x, y, a); }
     };
