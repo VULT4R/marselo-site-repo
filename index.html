@@ -333,7 +333,7 @@
         #physPanel .presets { display: flex; gap: 4px; margin: 2px 0 8px; }
         #physPanel .chip { flex: 1; padding: 2px 4px; font-size: 0.72rem; border: 2px solid #222; background: #fff; border-radius: 999px; font-family: inherit; cursor: pointer; }
         #physPanel .chip:hover { background: #ffee58; }
-        #slowBtn {
+        #slowBtn, #freezeBtn {
             width: 100%;
             border: 2px solid #222;
             background: #fff;
@@ -344,9 +344,10 @@
             font-weight: bold;
             cursor: pointer;
         }
-        #slowBtn:hover { background: #e3f2fd; }
+        #slowBtn:hover, #freezeBtn:hover { background: #e3f2fd; }
         #slowBtn.on { background: #82b1ff; }
-        #slowBtn kbd { border: 2px solid #222; border-radius: 5px; padding: 0 5px; background: #fff; font-family: inherit; font-size: 0.75rem; }
+        #freezeBtn.on { background: #80d8ff; }
+        #slowBtn kbd, #freezeBtn kbd { border: 2px solid #222; border-radius: 5px; padding: 0 5px; background: #fff; font-family: inherit; font-size: 0.75rem; }
         #slowBadge {
             position: absolute;
             top: 58px;
@@ -424,6 +425,15 @@
         #arena.closed-bottom #toolDock #toolbar { visibility: hidden; transition: visibility 0s .25s; }
         #arena.closed-bottom #arenaHint { bottom: 52px; }
         @media (prefers-reduced-motion: reduce) { #physPanel, #touchCtl, #toolDock, #arenaHint { transition: none; } }
+        /* controls text + buttons sit above the tool dock, wherever its height ends up */
+        #arena #arenaHint { bottom: calc(var(--dockH, 150px) + 18px); }
+        #arena.closed-bottom #arenaHint { bottom: 52px; }
+        #arena #touchCtl { bottom: calc(var(--dockH, 150px) + 12px); transition: transform .25s ease, bottom .25s ease; }
+        #arena.closed-bottom #touchCtl { bottom: 54px; }
+        /* frozen time */
+        #freezeBadge { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px); text-align: center; background: #b3e5fc; border: 3px solid #222; border-radius: 18px; padding: 3px 14px; font-weight: bold; font-size: 0.9rem; box-shadow: 3px 3px 0 #222; pointer-events: none; z-index: 2; }
+        #freezeBadge[hidden] { display: none; }
+        @media (max-width: 600px) { #freezeBadge { top: 90px; font-size: 0.78rem; } }
         /* fruit ninja */
         #ninjaBtn { position: fixed; top: 58px; left: 12px; z-index: 1100; border: 3px solid #222; background: #ffd740; color: #222; border-radius: 999px; padding: 8px 16px; font-family: 'Comic Sans MS', 'Comic Sans', cursive; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 3px 3px 0 #222; }
         #ninjaBtn:hover { background: #ffee58; }
@@ -510,6 +520,7 @@
                 <button class="chip" type="button" data-g="250">heavy</button>
             </div>
             <button id="slowBtn" type="button" aria-pressed="false">slow-mo <kbd>G</kbd></button>
+            <button id="freezeBtn" type="button" aria-pressed="false">freeze time <kbd>SPACE</kbd></button>
             <button id="invBtn" type="button" aria-pressed="false">invincible: off (I)</button>
             <div id="hpBar" title="Marselo's health"><div id="hpFill"></div></div>
             <div class="row" style="margin-top:8px"><span>map</span></div>
@@ -521,6 +532,7 @@
             <button id="ninjaArenaBtn" type="button">fruit ninja mode</button>
         </div>
         <div id="slowBadge" hidden>SLOW-MO 25%</div>
+        <div id="freezeBadge" hidden>&#10052; TIME FROZEN &middot; drag things to pose them &middot; SPACE to resume</div>
         <div id="arenaHint"></div>
         <div id="touchCtl" aria-label="Held item controls">
             <button id="tabRight" class="dock-tab" type="button"></button>
@@ -531,6 +543,7 @@
             <button type="button" data-key="e" aria-label="Spawn selected tool facing right">+&#9654;</button>
             <button type="button" data-key="x" aria-label="Delete held item">&#128465;</button>
             <button type="button" data-key="c" aria-label="Clear everything">&#129529;</button>
+            <button type="button" data-key="space" aria-label="Freeze or unfreeze time">&#10052;</button>
         </div>
         <div id="toolDock">
             <button id="tabBottom" class="dock-tab" type="button"></button>
@@ -1839,8 +1852,10 @@
         if (grab.kind === 'item') {
             var it = grab.it; it.held = false; it.firing = false;
             if (it.sawOn) { it.sawOn = false; sawSound(false); }
-            if (it.locked || it.d.kind === 'star') { it.vx = v.x * 0.92; it.vy = v.y * 0.92; it.w = clamp(it.w, -30, 30) * 0.8; }
+            if ((it.locked || it.d.kind === 'star') && !timeStop) { it.vx = v.x * 0.92; it.vy = v.y * 0.92; it.w = clamp(it.w, -30, 30) * 0.8; }
             it.locked = false;
+        } else if (timeStop) {
+            /* posing while frozen: keep the pose, no throw */
         } else if (grab.cutPt) {
             var cq = pts[grab.i]; cq.px = cq.x - v.x * STEP * 0.7; cq.py = cq.y - v.y * STEP * 0.7;
         } else {
@@ -2571,6 +2586,7 @@
         else if (k === 'd') keys.d = true;
         else if (k === 'f') { fDown(); e.preventDefault(); }
         else if (k === 'g') { if (!e.repeat) toggleSlow(); }
+        else if (e.key === ' ') { e.preventDefault(); if (!e.repeat) toggleFreeze(); }
         else if (k === 'e' || k === 'q') { if (!e.repeat) spawnSel(k === 'q'); }
         else if (k === 'i') { if (!e.repeat) toggleInv(); }
         else if (k === 'x' || k === 'delete' || k === 'backspace') { deleteHeld(); }
@@ -2580,13 +2596,14 @@
         }
     });
     document.addEventListener('keyup', function (e) {
+        if (open && e.key === ' ') e.preventDefault();
         var k = e.key.toLowerCase();
         if (k === 'a') keys.a = false; else if (k === 'd') keys.d = false; else if (k === 'f') keys.f = false;
     });
     // on-screen controls for touch screens
     Array.prototype.forEach.call(document.querySelectorAll('#touchCtl button'), function (b) {
         var key = b.getAttribute('data-key');
-        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else if (key === 'x') deleteHeld(); else if (key === 'q' || key === 'e') spawnSel(key === 'q'); else if (key === 'c') clearEverything(); else keys[key] = true; });
+        b.addEventListener('pointerdown', function (e) { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (key === 'f') fDown(); else if (key === 'x') deleteHeld(); else if (key === 'q' || key === 'e') spawnSel(key === 'q'); else if (key === 'c') clearEverything(); else if (key === 'space') toggleFreeze(); else keys[key] = true; });
         var up = function () { keys[key] = false; };
         b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
     });
@@ -3037,6 +3054,7 @@
 
     /* ============ main loop ============ */
     function update(rt, rdt) {
+        if (timeStop) { samplePtr(rt); poseStep(rdt); return; }
         // time scale eases toward 100% or 25%
         var target = slowOn ? 0.25 : 1;
         ts += (target - ts) * Math.min(1, rdt / 1000 * 9);
@@ -3172,6 +3190,7 @@
         items.forEach(function (it) { if (it.stuck && !gone) { var E = anchorW(it.stuck); ctx.fillStyle = '#b3121c'; ctx.beginPath(); ctx.arc(E.x, E.y, 4 * S, 0, 7); ctx.fill(); } });
         if (grab && grab.kind === 'item') drawHeldMarks(grab.it);
         drawBeam(); drawRopePreview();
+        if (timeStop) { ctx.fillStyle = 'rgba(120,190,255,.13)'; ctx.fillRect(0, 0, W, H); }
         tracers.forEach(function (t) {
             ctx.strokeStyle = 'rgba(255,240,150,' + (1 - (now - t.t0) / 70) + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(t.x0, t.y0); ctx.lineTo(t.x1, t.y1); ctx.stroke();
         });
@@ -3235,6 +3254,7 @@
         else { pts.forEach(function (p) { p.x = Math.min(W - p.rad, p.x); }); }
     }
     function resetArena() {
+        if (timeStop) toggleFreeze();
         grab = null; setHint();
         sadUntil = 0; stand = 1; $('arenaHits').textContent = 'hits: ' + hits; walk.dir = 0; walk.panic = false; walk.next = gt + 3000; outUntil = 0;
         pieces = []; melt = null; flat = null; cars = []; nextCar = gt + 12000; sleepRt = 0; sleepWas = false; beam = null; idleSay = gt + 8000; laserSound(false);
@@ -3413,6 +3433,38 @@
         [[d.sx, d.sy, d.a], [d.ex, d.ey, b]].forEach(function (q) { c.strokeStyle = q[2] ? '#69f0ae' : col; c.lineWidth = 4; c.beginPath(); c.arc(q[0], q[1], 12 * S, 0, 7); c.stroke(); });
         c.restore();
     }
+
+    /* ============ freeze time / pose mode ============ */
+    var timeStop = false, posed = false;
+    function toggleFreeze() {
+        timeStop = !timeStop;
+        $('freezeBadge').hidden = !timeStop;
+        var fb = $('freezeBtn'); fb.classList.toggle('on', timeStop); fb.setAttribute('aria-pressed', String(timeStop));
+        if (timeStop) { sawSound(false); beam = null; fEdge = false; posed = false; }
+        else if (posed) { stand = 0; sadUntil = Math.max(sadUntil, gt + 700); posed = false; }     // like letting go of him: he flops out of the pose
+        SFX.slow(timeStop);
+    }
+    $('freezeBtn').addEventListener('click', function () { toggleFreeze(); this.blur(); });
+    function poseStep(rdt) {                         // time is stopped: no gravity, no motion, but you can still move things around
+        var i; fEdge = false;
+        if (grab && grab.kind === 'item') {
+            var gi = grab.it, rot = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+            if ((keys.a || keys.d) && !gi.locked) { gi.aim = gi.a; gi.locked = true; }
+            if (rot) gi.aim += rot * 3.2 * rdt / 1000;
+            if (gi.locked) gi.a = gi.aim;
+            var P = grabTarget(gi), G = wp(gi, grab.ax, grab.ay); gi.x += P.x - G.x; gi.y += P.y - G.y; gi.vx = gi.vy = gi.w = 0;
+        } else if (grab && grab.kind === 'piece') {
+            var pc = grab.pc, ca = Math.cos(pc.a), sa = Math.sin(pc.a);
+            pc.x = clamp(ptr.x, 4, W - 4) - (ca * pc.gx - sa * pc.gy); pc.y = clamp(ptr.y, 4, H - 4) - (sa * pc.gx + ca * pc.gy); pc.vx = pc.vy = pc.w = 0;
+        } else if (grab && grab.kind === 'body') {
+            posed = true;
+            for (var k = 0; k < 3; k++) { grabBody(); solve(); for (i = 0; i < pts.length; i++) { pts[i].px = pts[i].x; pts[i].py = pts[i].y; } }
+        }
+        impact = 0;
+    }
+    function setDockH() { arena.style.setProperty('--dockH', $('toolDock').offsetHeight + 'px'); }
+    if (window.ResizeObserver) new ResizeObserver(setDockH).observe($('toolDock'));
+    window.addEventListener('resize', setDockH);
 
     /* ============ dock menus + clear everything ============ */
     var dockSmall = window.innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
@@ -3643,7 +3695,7 @@
     setHint();
     window.__combat = {
         open: openArena, close: closeArena,
-        _dbg: function () { return { dock: dock, tearT: tearT, cons: cons, ropes: ropes, cables: cables, rcons: rcons, cutDone: cutDone, cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
+        _dbg: function () { return { timeStop: timeStop, dock: dock, tearT: tearT, cons: cons, ropes: ropes, cables: cables, rcons: rcons, cutDone: cutDone, cars: cars, flat: flat, mapId: mapId, pieces: pieces, melt: melt, gone: gone, asleep: asleep(), hid: hid, headPoly: headPoly, pts: pts, sadUntil: sadUntil, stand: stand, hits: hits, items: items, grab: grab, gt: gt, ts: ts, gravPct: gravPct, burn: burnUntil }; },
         hit: function (x, y) { poke(x, y); },
         _spawn: function (id, x, y, a) { return spawnItem(id, x, y, a); }
     };

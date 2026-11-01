@@ -3,7 +3,25 @@ MARSELO.SITE - UPDATE LOG
 Newest update on top. Every update gets a new entry here.
 
 
-UPDATE 7  (current)
+UPDATE 8  (current)
+-------------------
+Freeze time  (SPACE, the "freeze time" button in the left panel, or the snowflake button
+in the on-screen controls on phones)
+  * Everything stops: no gravity, no movement, cars, fire, blood and timers all pause.
+  * You can still grab things. Drag Marselo to the middle of the screen, pull his hands and
+    feet into any pose (limbs keep their real length), move or rotate tools (A / D, wheel),
+    move loose pieces, and place ropes and cables. Tools you spawn stay hanging in the air.
+  * Press SPACE again and everything turns back to normal. If you posed him he flops out of
+    the pose like when you let go of him. Reset also unfreezes.
+  * A blue tint and a "TIME FROZEN" badge show that time is stopped.
+
+Controls text
+  * The controls hint and the on-screen buttons now sit above the tool bar and its tab,
+    wherever the bar ends up (it measures the bar's height), so nothing covers them.
+  * On phones the on-screen buttons are now two even rows of four.
+
+
+UPDATE 7
 -------------------
 Clear everything
   * New "clear everything" button in the left panel, and a broom button in the on-screen

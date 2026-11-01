@@ -45,6 +45,7 @@ it facing left (at your cursor). Grab anything with the mouse.
 | Mouse wheel | rotate the held tool |
 | X | delete the held tool |
 | G | slow motion |
+| SPACE | freeze time (you can still move and pose everything), press again to resume |
 | I | invincible on / off |
 
 Held tools hang and swing like real pendulums from the spot you grabbed them. Pressing
@@ -64,6 +65,12 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
 * **Laser cutter**: slices whatever the beam crosses into physics pieces that can be
   picked up, carried and sliced again. It never kills him; you can keep cutting him
   forever.
+
+### Freeze time and posing
+
+Press **SPACE** (or the snowflake button on phones) to stop time. Nothing falls or moves,
+but you can still drag Marselo and his limbs into any pose, move tools and pieces, and place
+ropes. Press SPACE again to let physics run again.
 
 ### Menus and clearing
 
