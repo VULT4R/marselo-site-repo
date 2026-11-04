@@ -3,7 +3,43 @@ MARSELO.SITE - UPDATE LOG
 Newest update on top. Every update gets a new entry here.
 
 
-UPDATE 8  (current)
+UPDATE 9  (current)
+-------------------
+Playground map  (left panel -> map -> "playground")
+  * A huge room in the style of the People Playground default map: concrete-grey walls with
+    a tile grid, pipes, support columns, a high ceiling with lights, a concrete floor, and
+    height marks (in metres) on the left wall. The world is 3x wider and 2.4x taller than
+    your screen.
+  * Camera: hold the MIDDLE MOUSE BUTTON and drag to move around the map. Mouse wheel
+    zooms in and out (when you are not holding a tool; wheel still rotates a held tool).
+    On phones use the new hand button in the on-screen controls: when it is on, one finger
+    drags the camera. Reset puts the camera back on Marselo.
+  * Everything (spawning, grabbing, ropes, freezing time) works at any camera position and zoom.
+
+Other Marselos  (new "Marselo" tool at the end of the tool bar)
+  * Select the tool and press E / Q (or tap +<| / |>+), or drag one up out of the bar.
+    Up to 6 at a time. Each has a random skin and its own voice pitch.
+  * They are full ragdolls: they stand, walk around on their own, can be grabbed, thrown,
+    posed while time is frozen, hit with tools and pushed around by explosions. They say
+    "ouch" lines when hit and bump into each other.
+  * They talk to each other and to the main Marselo: when two are near, they walk toward
+    each other and have a short conversation (speech bubbles + voice).
+  * Limits for now: other Marselos cannot be tied with ropes, dismembered, melted, sliced,
+    crushed by cars, set on fire or have things stuck in them.
+
+Fireworks  (new "Firework" tool)
+  * Spawns standing upright. Light it by TAPPING / CLICKING it, or by pressing F while
+    holding it. After a short fuse it launches, flies along its nose with a flame trail and
+    whistle, then bursts into a coloured firework (and gives a small push to anything close).
+  * Ropes can now be tied to tools. Use the Rope tool to drag from the firework to Marselo,
+    then light it: the firework flies and drags Marselo up with it. When it bursts the rope
+    drops free.
+
+Also: the tool bar shrinks a bit more to fit the 17 tools; fixed rope solving when other
+Marselos are present.
+
+
+UPDATE 8
 -------------------
 Freeze time  (SPACE, the "freeze time" button in the left panel, or the snowflake button
 in the on-screen controls on phones)

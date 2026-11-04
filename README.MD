@@ -45,6 +45,8 @@ it facing left (at your cursor). Grab anything with the mouse.
 | Mouse wheel | rotate the held tool |
 | X | delete the held tool |
 | G | slow motion |
+| Middle mouse drag | move the camera (playground map) |
+| Mouse wheel | zoom (playground map, when no tool is held) |
 | SPACE | freeze time (you can still move and pose everything), press again to resume |
 | I | invincible on / off |
 
@@ -65,6 +67,15 @@ A or D freezes the swinging; let go and grab again to get the swinging back.
 * **Laser cutter**: slices whatever the beam crosses into physics pieces that can be
   picked up, carried and sliced again. It never kills him; you can keep cutting him
   forever.
+
+### Playground map, other Marselos and fireworks
+
+* **playground** (map chips): a huge People-Playground-style room. Hold the **middle mouse
+  button** and drag to move the camera, use the **mouse wheel** to zoom (hand button on phones).
+* **Marselo tool**: spawns more Marselos (E / Q, or drag out of the bar). They walk, can be
+  grabbed and hit, and talk to each other and to you in conversations.
+* **Firework tool**: tap it (or press F while holding) to light it. Tie a rope from the
+  firework to Marselo and he gets dragged into the sky with it.
 
 ### Freeze time and posing
 
